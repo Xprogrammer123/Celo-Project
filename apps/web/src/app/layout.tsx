@@ -1,34 +1,47 @@
-import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
-import './globals.css';
+import type { Metadata } from "next";
+import { Archivo_Black, Space_Grotesk } from "next/font/google";
+import "./globals.css";
 
-import { Navbar } from '@/components/navbar';
-import { WalletProvider } from "@/components/wallet-provider"
+import { SiteHeader } from "@/components/site-header";
+import { WalletProvider } from "@/components/wallet-provider";
+import { WrongNetworkBanner } from "@/components/wrong-network-banner";
+import { RetroTooltipProvider } from "@/components/retroui/tooltip";
 
-const inter = Inter({ subsets: ['latin'] });
+const fontHead = Archivo_Black({
+  subsets: ["latin"],
+  weight: "400",
+  variable: "--font-head",
+  display: "swap",
+});
+
+const fontSans = Space_Grotesk({
+  subsets: ["latin"],
+  variable: "--font-sans",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
-  title: 'my-celo-app',
-  description: 'A new Celo blockchain project',
+  title: "Loot Scratch",
+  description: "Pay. Scratch. Win an NFT. On-chain. Provably fair.",
 };
 
 export default function RootLayout({
   children,
-}: {
+}: Readonly<{
   children: React.ReactNode;
-}) {
+}>) {
   return (
     <html lang="en">
-      <body className={inter.className}>
-        {/* Navbar is included on all pages */}
-        <div className="relative flex min-h-screen flex-col">
-          <WalletProvider>
-            <Navbar />
-            <main className="flex-1">
-              {children}
-            </main>
-          </WalletProvider>
-        </div>
+      <body
+        className={`${fontHead.variable} ${fontSans.variable} font-sans min-h-screen antialiased`}
+      >
+        <WalletProvider>
+          <RetroTooltipProvider>
+            <WrongNetworkBanner />
+            <SiteHeader />
+            {children}
+          </RetroTooltipProvider>
+        </WalletProvider>
       </body>
     </html>
   );
