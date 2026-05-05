@@ -1,80 +1,129 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
-@layer base {
-  :root {
-    --border: 214.3 31.8% 91.4%;
-    --input: 216 33% 97%;
-    --ring: 215 20.2% 65.1%;
+@theme inline {
+  --font-head: var(--font-head);
+  --font-sans: var(--font-sans);
 
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+  --color-background: #ffffff;
+  --color-foreground: #000000;
+  --color-primary: #ffdb33;
+  --color-primary-foreground: #000000;
+  --color-secondary: #000000;
+  --color-secondary-foreground: #ffffff;
+  --color-muted: #fae583;
+  --color-muted-foreground: #404040;
+  --color-accent: #fae583;
+  --color-accent-foreground: #000000;
+  --color-destructive: #e63946;
+  --color-destructive-foreground: #ffffff;
+  --color-win: #00c853;
+  --color-win-foreground: #000000;
+  --color-card: #ffffff;
+  --color-card-foreground: #000000;
+  --color-popover: #ffffff;
+  --color-popover-foreground: #000000;
+  --color-border: #000000;
+  --color-input: #000000;
 
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+  --radius-lg: 0;
+  --radius-md: 0;
+  --radius-sm: 0;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
-
-    --secondary: 210 40% 96%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-
-    --muted: 210 40% 96%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-
-    --accent: 210 40% 96%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
-
-    --radius: 0.5rem;
-  }
-
-  .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
-  }
+  --shadow-sm: 2px 2px 0 0 #000000;
+  --shadow-md: 4px 4px 0 0 #000000;
+  --shadow-xl: 10px 10px 0 1px #000000;
 }
 
 @layer base {
+  :root {
+    --background: #ffffff;
+    --foreground: #000000;
+    --primary: #ffdb33;
+    --primary-foreground: #000000;
+    --secondary: #000000;
+    --secondary-foreground: #ffffff;
+    --muted: #fae583;
+    --muted-foreground: #404040;
+    --accent: #fae583;
+    --accent-foreground: #000000;
+    --destructive: #e63946;
+    --destructive-foreground: #ffffff;
+    --win: #00c853;
+    --win-foreground: #000000;
+    --card: #ffffff;
+    --card-foreground: #000000;
+    --popover: #ffffff;
+    --popover-foreground: #000000;
+    --border: #000000;
+    --input: #000000;
+    --ring: #000000;
+    --radius: 0;
+    --shadow-sm: 2px 2px 0 0 #000000;
+    --shadow-md: 4px 4px 0 0 #000000;
+    --shadow-xl: 10px 10px 0 1px #000000;
+  }
+
   * {
-    @apply border-border;
+    border-color: var(--border);
   }
+
   body {
-    @apply bg-background text-foreground;
+    background: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
   }
+
+  .font-head {
+    font-family: var(--font-head), ui-sans-serif, sans-serif;
+  }
+}
+
+@keyframes ticker {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+@keyframes shake-card {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-8px);
+  }
+  75% {
+    transform: translateX(8px);
+  }
+}
+
+@keyframes flash-win {
+  0%,
+  100% {
+    box-shadow: var(--shadow-xl);
+    border-color: #000;
+  }
+  50% {
+    box-shadow: 10px 10px 0 1px var(--win);
+    border-color: var(--win);
+  }
+}
+
+.animate-ticker {
+  animation: ticker 40s linear infinite;
+}
+
+.animate-ticker:hover {
+  animation-play-state: paused;
+}
+
+.animate-shake {
+  animation: shake-card 0.4s ease-in-out;
+}
+
+.animate-flash-win {
+  animation: flash-win 0.35s ease-in-out 3;
 }

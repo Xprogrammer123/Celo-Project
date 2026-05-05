@@ -1,0 +1,8 @@
+import type { Address } from "viem";
+
+/** Set after deployment: NEXT_PUBLIC_LOOT_SCRATCH_ADDRESS */
+export const LOOT_SCRATCH_ADDRESS = (process.env.NEXT_PUBLIC_LOOT_SCRATCH_ADDRESS ??
+  "0x0000000000000000000000000000000000000000") as Address;
+
+export const isContractConfigured =
+  LOOT_SCRATCH_ADDRESS !== "0x0000000000000000000000000000000000000000";

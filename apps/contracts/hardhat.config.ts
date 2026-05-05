@@ -9,6 +9,7 @@ const config: HardhatUserConfig = {
         enabled: true,
         runs: 200,
       },
+      evmVersion: "cancun",
     },
   },
   networks: {
@@ -19,7 +20,7 @@ const config: HardhatUserConfig = {
       chainId: 42220,
     },
     // Celo Sepolia Testnet
-    celo-sepolia: {
+    "celo-sepolia": {
       url: "https://forno.celo-sepolia.celo-testnet.org/",
       accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
       chainId: 11142220,
@@ -29,11 +30,17 @@ const config: HardhatUserConfig = {
       url: "http://127.0.0.1:8545",
       chainId: 31337,
     },
+    "base-sepolia": {
+      url: process.env.BASE_SEPOLIA_RPC_URL || "https://sepolia.base.org",
+      accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
+      chainId: 84532,
+    },
   },
   etherscan: {
     apiKey: {
       celo: process.env.ETHERSCAN_API_KEY || "",
-      celo-sepolia: process.env.ETHERSCAN_API_KEY || "",
+      "celo-sepolia": process.env.ETHERSCAN_API_KEY || "",
+      "base-sepolia": process.env.BASESCAN_API_KEY || "",
     },
     customChains: [
       {
@@ -50,6 +57,14 @@ const config: HardhatUserConfig = {
         urls: {
           apiURL: "https://api.etherscan.io/v2/api",
           browserURL: "https://sepolia.celoscan.io/",
+        },
+      },
+      {
+        network: "base-sepolia",
+        chainId: 84532,
+        urls: {
+          apiURL: "https://api-sepolia.basescan.org/api",
+          browserURL: "https://sepolia.basescan.org",
         },
       },
     ],
