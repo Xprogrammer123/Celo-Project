@@ -48,14 +48,20 @@ export function useLeaderboard() {
 
       const legendBy: Record<string, number> = {};
       for (const log of legendLogs) {
-        const p = log.args.player as Address;
-        legendBy[p] = (legendBy[p] ?? 0) + 1;
+        const args = log.args as { player?: Address } | undefined;
+        const p = args?.player;
+        if (!p) continue;
+        const k = p.toLowerCase();
+        legendBy[k] = (legendBy[k] ?? 0) + 1;
       }
 
       const scratchBy: Record<string, number> = {};
       for (const log of scratchLogs) {
-        const p = log.args.player as Address;
-        scratchBy[p] = (scratchBy[p] ?? 0) + 1;
+        const args = log.args as { player?: Address } | undefined;
+        const p = args?.player;
+        if (!p) continue;
+        const k = p.toLowerCase();
+        scratchBy[k] = (scratchBy[k] ?? 0) + 1;
       }
 
       const sorted = Object.entries(legendBy)

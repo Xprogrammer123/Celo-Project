@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import type { Address, Hex } from "viem";
 import { useAccount, useReadContract, useWriteContract, useChainId } from "wagmi";
 import { baseSepolia } from "wagmi/chains";
@@ -10,7 +10,7 @@ import { LOOT_SCRATCH_ADDRESS, isContractConfigured } from "@/constants/contract
 export function useScratch() {
   const { address } = useAccount();
   const chainId = useChainId();
-  const { data: hash, writeContractAsync, isPending, error, reset } = useWriteContract();
+  const { data: hash, writeContractAsync, isPending, error } = useWriteContract();
   const [sessionSpent, setSessionSpent] = useState(0n);
 
   const { data: mintFee } = useReadContract({
@@ -39,10 +39,6 @@ export function useScratch() {
     },
     [chainId, fee, writeContractAsync]
   );
-
-  useEffect(() => {
-    if (error) reset();
-  }, [error, reset]);
 
   return {
     scratch,

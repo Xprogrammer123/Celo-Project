@@ -30,10 +30,14 @@ export function useLegendaryTicker() {
     onLogs(logs) {
       setExtra((e) => {
         const next = logs.map((log, i) => {
-          const p = log.args?.player as Address | undefined;
+          const rec = log as {
+            blockNumber?: bigint;
+            args?: { player?: Address };
+          };
+          const p = rec.args?.player;
           const a = p ? shortAddr(p) : "unknown";
           return {
-            id: `${log.blockNumber}-${i}-${a}`,
+            id: `${rec.blockNumber}-${i}-${a}`,
             text: `${a} JUST WON LEGENDARY`,
             live: true as const,
           };

@@ -33,10 +33,19 @@ export function useWatchScratched(
     onLogs(logs) {
       const mine = address?.toLowerCase();
       for (const log of logs) {
-        const p = log.args?.player as Address | undefined;
+        const args = (
+          log as {
+            args?: {
+              player?: Address;
+              tokenId?: bigint;
+              rarity?: number | bigint;
+            };
+          }
+        ).args;
+        const p = args?.player;
         if (!p || p.toLowerCase() !== mine) continue;
-        const tokenId = log.args?.tokenId as bigint | undefined;
-        const rarity = log.args?.rarity;
+        const tokenId = args.tokenId;
+        const rarity = args.rarity;
         if (tokenId === undefined || rarity === undefined) continue;
         cb.current({
           tokenId,
