@@ -1,32 +1,33 @@
 "use client";
 
-import { baseSepolia } from "wagmi/chains";
+import { celoAlfajores } from "wagmi/chains";
 import { useAccount, useSwitchChain } from "wagmi";
 import { RetroButton } from "@/components/retroui/button";
 
 export function WrongNetworkBanner() {
   const { chain, isConnected } = useAccount();
-  const { switchChain, isPending } = useSwitchChain();
+  const { switchChain } = useSwitchChain();
 
-  if (!isConnected || chain?.id === baseSepolia.id) {
+  if (!isConnected || chain?.id === celoAlfajores.id) {
     return null;
   }
 
   return (
-    <div
-      className="flex flex-wrap items-center justify-center gap-3 border-b-2 border-black bg-primary px-4 py-3 text-center font-sans text-sm font-semibold text-primary-foreground"
-      role="status"
-    >
-      WRONG NETWORK — SWITCH TO BASE SEPOLIA TO PLAY.
-      <RetroButton
-        type="button"
-        variant="secondary"
-        className="text-xs uppercase"
-        disabled={isPending}
-        onClick={() => switchChain({ chainId: baseSepolia.id })}
-      >
-        {isPending ? "SWITCHING…" : "SWITCH NOW"}
-      </RetroButton>
+    <div className="bg-destructive px-4 py-3 text-destructive-foreground">
+      <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-3 sm:flex-row">
+        <p className="font-sans text-sm font-bold">
+          You&apos;re on the wrong network. Please switch to Celo Alfajores to
+          play.
+        </p>
+        <RetroButton
+          type="button"
+          variant="secondary"
+          className="whitespace-nowrap bg-white text-black hover:bg-neutral-200"
+          onClick={() => switchChain({ chainId: celoAlfajores.id })}
+        >
+          SWITCH NETWORK
+        </RetroButton>
+      </div>
     </div>
   );
 }

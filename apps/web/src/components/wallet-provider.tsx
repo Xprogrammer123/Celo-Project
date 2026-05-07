@@ -1,15 +1,10 @@
 "use client";
 
-import { RainbowKitProvider, connectorsForWallets } from "@rainbow-me/rainbowkit";
+import { RainbowKitProvider, getDefaultConfig } from "@rainbow-me/rainbowkit";
 import "@rainbow-me/rainbowkit/styles.css";
-import {
-  coinbaseWallet,
-  metaMaskWallet,
-  walletConnectWallet,
-} from "@rainbow-me/rainbowkit/wallets";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { WagmiProvider, createConfig, http } from "wagmi";
-import { baseSepolia } from "wagmi/chains";
+import { WagmiProvider, http } from "wagmi";
+import { celoAlfajores } from "wagmi/chains";
 
 /** RainbowKit requires a non-empty WalletConnect Cloud project id for builds and SSR. */
 const WC_FALLBACK_PROJECT_ID =
@@ -18,24 +13,12 @@ const WC_FALLBACK_PROJECT_ID =
 const projectId =
   process.env.NEXT_PUBLIC_WC_PROJECT_ID?.trim() || WC_FALLBACK_PROJECT_ID;
 
-const connectors = connectorsForWallets(
-  [
-    {
-      groupName: "Recommended",
-      wallets: [metaMaskWallet, coinbaseWallet, walletConnectWallet],
-    },
-  ],
-  {
-    appName: "Loot Scratch",
-    projectId,
-  }
-);
-
-const wagmiConfig = createConfig({
-  chains: [baseSepolia],
-  connectors,
+const wagmiConfig = getDefaultConfig({
+  appName: "Loot Scratch",
+  projectId,
+  chains: [celoAlfajores],
   transports: {
-    [baseSepolia.id]: http(process.env.NEXT_PUBLIC_BASE_SEPOLIA_RPC_URL),
+    [celoAlfajores.id]: http(process.env.CELO_ALFAJORES_RPC_URL),
   },
   ssr: true,
 });
@@ -51,4 +34,3 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
     </WagmiProvider>
   );
 }
-

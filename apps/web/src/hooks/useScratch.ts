@@ -3,7 +3,7 @@
 import { useCallback, useState } from "react";
 import type { Address, Hex } from "viem";
 import { useAccount, useReadContract, useWriteContract, useChainId } from "wagmi";
-import { baseSepolia } from "wagmi/chains";
+import { celoAlfajores } from "wagmi/chains";
 import { lootScratchAbi } from "@/contracts";
 import { LOOT_SCRATCH_ADDRESS, isContractConfigured } from "@/constants/contract";
 
@@ -26,7 +26,7 @@ export function useScratch() {
     async (referrer: Address) => {
       if (!isContractConfigured)
         throw new Error("Set NEXT_PUBLIC_LOOT_SCRATCH_ADDRESS first.");
-      if (chainId !== baseSepolia.id) throw new Error("Switch to Base Sepolia.");
+      if (chainId !== celoAlfajores.id) throw new Error("Switch to Celo Alfajores.");
       const h = await writeContractAsync({
         address: LOOT_SCRATCH_ADDRESS,
         abi: lootScratchAbi,

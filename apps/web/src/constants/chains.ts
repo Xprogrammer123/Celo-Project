@@ -1,3 +1,3 @@
-import { baseSepolia } from "wagmi/chains";
+import { celoAlfajores } from "wagmi/chains";
 
-export const configuredChain = baseSepolia;
+export const configuredChain = celoAlfajores;
