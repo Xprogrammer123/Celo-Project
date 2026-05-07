@@ -33,8 +33,8 @@ const config: HardhatUserConfig = {
         network: "alfajores",
         chainId: 11142220,
         urls: {
-          apiURL: "https://celo-alfajores.blockscout.com/api",
-          browserURL: "https://celo-alfajores.blockscout.com",
+          apiURL: "https://celo-sepolia.blockscout.com/api",
+          browserURL: "https://celo-sepolia.blockscout.com",
         },
       },
     ],
