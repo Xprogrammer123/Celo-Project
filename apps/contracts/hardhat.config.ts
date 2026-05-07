@@ -13,11 +13,9 @@ const config: HardhatUserConfig = {
   },
   networks: {
     alfajores: {
-      url:
-        process.env.CELO_ALFAJORES_RPC_URL ||
-        "https://alfajores-forno.celo-testnet.org",
+      url: process.env.CELO_ALFAJORES_RPC_URL || "https://forno.celo-sepolia.celo-testnet.org/",
       accounts: process.env.PRIVATE_KEY ? [`0x${process.env.PRIVATE_KEY}`] : [],
-      chainId: 44787, // ✅ fixed
+      chainId: 11142220,
     },
     celo: {
       url:
