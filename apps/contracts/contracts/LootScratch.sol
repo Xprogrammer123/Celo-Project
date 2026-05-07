@@ -314,7 +314,7 @@ contract LootScratch is ERC721Enumerable, VRFConsumerBaseV2Plus {
     function _svgEpic(uint256 /* tokenId */) internal pure returns (string memory) {
         return string.concat(
             '<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 400 400">',
-            '<rect width="400" height="400" fill="#000"/>',
+            '<rect width="400" height="400" fill="#321b1bff"/>',
             '<line x1="200" y1="200" x2="200" y2="40" stroke="#fff" stroke-width="2"/><line x1="200" y1="200" x2="360" y2="200" stroke="#fff" stroke-width="2"/>',
             '<line x1="200" y1="200" x2="200" y2="360" stroke="#fff" stroke-width="2"/><line x1="200" y1="200" x2="40" y2="200" stroke="#fff" stroke-width="2"/>',
             '<line x1="200" y1="200" x2="320" y2="80" stroke="#fff" stroke-width="2"/><line x1="200" y1="200" x2="320" y2="320" stroke="#fff" stroke-width="2"/>',
