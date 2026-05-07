@@ -24,6 +24,21 @@ const config: HardhatUserConfig = {
       chainId: 42220,
     },
   },
+  etherscan: {
+    apiKey: {
+      alfajores: "empty",
+    },
+    customChains: [
+      {
+        network: "alfajores",
+        chainId: 11142220,
+        urls: {
+          apiURL: "https://celo-alfajores.blockscout.com/api",
+          browserURL: "https://celo-alfajores.blockscout.com",
+        },
+      },
+    ],
+  },
 };
 
 export default config;
