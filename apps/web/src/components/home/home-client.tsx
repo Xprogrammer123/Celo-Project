@@ -320,8 +320,8 @@ export function HomeClient() {
           </div>
 
           <p className="font-sans mt-7 max-w-sm text-base font-medium leading-relaxed text-black/55">
-            Provably fair on-chain scratch cards powered by Chainlink VRF.
-            No house tricks. Every result lives on Base Sepolia — forever.
+            Provably fair on-chain scratch cards.
+            No house tricks. Every result lives on Celo Alfajores — forever.
           </p>
 
           <div className="mt-8 flex items-center gap-5">
@@ -368,10 +368,48 @@ export function HomeClient() {
         </div>
       </section>
 
-      {/* BOTTOM STRIP — yellow bar like reference bottom */}
+      {/* HOW TO PLAY SECTION */}
+      <section className="relative z-10 mx-auto max-w-7xl px-8 py-16">
+        <div className="border-4 border-black bg-white p-8 shadow-[8px_8px_0_0_#000]">
+          <h2 className="font-head text-4xl font-black uppercase tracking-tight text-black mb-6">
+            How to Play
+          </h2>
+          <div className="grid gap-8 md:grid-cols-3">
+            <div>
+              <div className="mb-4 inline-flex h-12 w-12 items-center justify-center border-2 border-black bg-[#ffdb33] font-head text-2xl font-black shadow-[4px_4px_0_0_#000]">
+                1
+              </div>
+              <h3 className="font-sans text-xl font-bold mb-2">Connect Wallet</h3>
+              <p className="font-sans text-sm font-medium text-black/60">
+                Connect your Web3 wallet to the Celo Alfajores network to get started.
+              </p>
+            </div>
+            <div>
+              <div className="mb-4 inline-flex h-12 w-12 items-center justify-center border-2 border-black bg-[#c084fc] font-head text-2xl font-black shadow-[4px_4px_0_0_#000]">
+                2
+              </div>
+              <h3 className="font-sans text-xl font-bold mb-2">Scratch & Reveal</h3>
+              <p className="font-sans text-sm font-medium text-black/60">
+                Pay the entry fee and scratch your card to reveal the hidden rarity tier.
+              </p>
+            </div>
+            <div>
+              <div className="mb-4 inline-flex h-12 w-12 items-center justify-center border-2 border-black bg-black text-[#ffdb33] font-head text-2xl font-black shadow-[4px_4px_0_0_#ffdb33]">
+                3
+              </div>
+              <h3 className="font-sans text-xl font-bold mb-2">Win NFTs</h3>
+              <p className="font-sans text-sm font-medium text-black/60">
+                Collect Common, Rare, Epic, or Legendary NFTs directly to your wallet!
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* BOTTOM STRIP — yellow bar */}
       <div className="relative z-10 border-t-2 border-black bg-[#ffdb33] px-10 py-3 flex items-center justify-between">
         <span className="font-head text-[11px] font-black uppercase tracking-[0.2em] text-black">
-          on-chain · provably fair · base sepolia
+          on-chain · provably fair · celo alfajores
         </span>
         <div className="flex gap-3">
           {["𝕏", "▶", "◆"].map((icon, i) => (
@@ -384,6 +422,21 @@ export function HomeClient() {
           ))}
         </div>
       </div>
+
+      {/* SIMPLE FOOTER */}
+      <footer className="relative z-10 border-t-2 border-black bg-white px-8 py-12">
+        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-6 md:flex-row">
+          <div className="flex items-center gap-2">
+            <div className="h-8 w-8 border-2 border-black bg-[#ffdb33] shadow-[2px_2px_0_0_#000]"></div>
+            <span className="font-head text-2xl font-black uppercase tracking-tighter">
+              LootScratch
+            </span>
+          </div>
+          <p className="font-sans text-sm font-medium text-black/50 text-center md:text-left">
+            © {new Date().getFullYear()} LootScratch. Built on Celo.
+          </p>
+        </div>
+      </footer>
 
       <style>{`
         @keyframes starFloat {

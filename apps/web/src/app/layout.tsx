@@ -21,8 +21,12 @@ const fontSans = Space_Grotesk({
 });
 
 export const metadata: Metadata = {
-  title: "Loot Scratch",
+  title: "ROVA | Pay. Scratch. Win an NFT. On-chain. Provably fair",
   description: "Pay. Scratch. Win an NFT. On-chain. Provably fair.",
+
+  icons: {
+    icon: "/logo.png",
+  },
 };
 
 export default function RootLayout({
