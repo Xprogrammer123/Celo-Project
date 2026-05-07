@@ -14,7 +14,7 @@ const projectId =
   process.env.NEXT_PUBLIC_WC_PROJECT_ID?.trim() || WC_FALLBACK_PROJECT_ID;
 
 const wagmiConfig = getDefaultConfig({
-  appName: "Loot Scratch",
+  appName: "Rova",
   projectId,
   chains: [celoAlfajores],
   transports: {

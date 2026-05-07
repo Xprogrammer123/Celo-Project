@@ -22,7 +22,7 @@ export function SiteHeader() {
           href="/"
           className="font-head text-xl font-black uppercase tracking-tight [-webkit-text-stroke:1px_black] md:text-2xl"
         >
-          LOOT SCRATCH
+          ROVA
         </Link>
         <nav className="hidden items-center gap-6 md:flex">
           {links.map((l) => (

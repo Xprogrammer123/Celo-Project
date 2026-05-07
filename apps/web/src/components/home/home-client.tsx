@@ -279,39 +279,7 @@ export function HomeClient() {
       {/* win ticker */}
       <WinTicker className="fixed left-0 right-0 top-0 z-20" />
 
-      {/* NAV — cyan strip exactly like reference */}
-      <nav className="relative z-10 mt-8 flex items-center justify-between border-y-2 border-black bg-[#00e5ff] px-10 py-3">
-        <span className="font-head text-sm font-black uppercase tracking-[0.25em] text-black">
-          ROVA
-        </span>
-        <div className="flex gap-10">
-          {(["Play", "Gallery", "Leaderboard"] as const).map((item) => (
-            <Link
-              key={item}
-              href={`/${item.toLowerCase()}`}
-              className="font-sans text-sm font-bold uppercase tracking-wider text-black hover:underline underline-offset-4 decoration-2"
-            >
-              {item}
-            </Link>
-          ))}
-          <RetroDialog>
-            <RetroDialogTrigger asChild>
-              <button className="font-sans text-sm font-bold uppercase tracking-wider text-black hover:underline underline-offset-4 decoration-2">
-                How&nbsp;to&nbsp;Play
-              </button>
-            </RetroDialogTrigger>
-            <RetroDialogContent>
-              <RetroDialogTitle>HOW TO PLAY</RetroDialogTitle>
-              <RetroDialogDescription className="font-sans space-y-3 text-left text-base text-foreground">
-                <p><strong>1.</strong> Connect wallet on Base Sepolia. Pay 0.001 ETH.</p>
-                <p><strong>2.</strong> Chainlink VRF rolls your rarity — Common to Legendary. Provably fair.</p>
-                <p><strong>3.</strong> Scratch the 3×3 grid. Win an NFT. Screenshot it. Flex forever.</p>
-              </RetroDialogDescription>
-              <RetroDialogClose type="button">LET&apos;S GO</RetroDialogClose>
-            </RetroDialogContent>
-          </RetroDialog>
-        </div>
-      </nav>
+    
 
       {/* HERO SECTION */}
       <section className="relative z-10 mx-auto flex max-w-7xl flex-col-reverse items-center gap-12 px-8 py-16 md:flex-row md:items-center md:justify-between">
