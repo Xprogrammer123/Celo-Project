@@ -1,3 +1,2 @@
-import { celoAlfajores } from "wagmi/chains";
-
-export const configuredChain = celoAlfajores;
+import { celo } from "wagmi/chains";
+export const configuredChain = celo;

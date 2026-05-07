@@ -27,6 +27,7 @@ const config: HardhatUserConfig = {
   etherscan: {
     apiKey: {
       alfajores: "empty",
+      celo: "empty",
     },
     customChains: [
       {
@@ -35,6 +36,14 @@ const config: HardhatUserConfig = {
         urls: {
           apiURL: "https://celo-sepolia.blockscout.com/api",
           browserURL: "https://celo-sepolia.blockscout.com",
+        },
+      },
+      {
+        network: "celo",
+        chainId: 42220,
+        urls: {
+          apiURL: "https://celo.blockscout.com/api",
+          browserURL: "https://celo.blockscout.com",
         },
       },
     ],

@@ -4,7 +4,7 @@ import { RainbowKitProvider, getDefaultConfig } from "@rainbow-me/rainbowkit";
 import "@rainbow-me/rainbowkit/styles.css";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { WagmiProvider, http } from "wagmi";
-import { celoAlfajores } from "wagmi/chains";
+import { celo } from "wagmi/chains";
 
 /** RainbowKit requires a non-empty WalletConnect Cloud project id for builds and SSR. */
 const WC_FALLBACK_PROJECT_ID =
@@ -16,9 +16,9 @@ const projectId =
 const wagmiConfig = getDefaultConfig({
   appName: "Rova",
   projectId,
-  chains: [celoAlfajores],
+  chains: [celo],
   transports: {
-    [celoAlfajores.id]: http(process.env.CELO_ALFAJORES_RPC_URL),
+    [celo.id]: http(process.env.CELO_RPC_URL),
   },
   ssr: true,
 });
