@@ -1,8 +1,10 @@
 "use client";
 
 import confetti from "canvas-confetti";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
+  decodeEventLog,
+  parseEventLogs,
   formatEther,
   isAddress,
   zeroAddress,
@@ -15,7 +17,7 @@ import {
   useWaitForTransactionReceipt,
 } from "wagmi";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
-import { baseSepolia } from "wagmi/chains";
+import { celo } from "wagmi/chains";
 import { rarityLabel } from "@/constants/rarity";
 import { isContractConfigured } from "@/constants/contract";
 import { usePlayerStats } from "@/hooks/usePlayerStats";
@@ -69,7 +71,7 @@ function Flame() {
 export function ScratchGame() {
   const { address, isConnected } = useAccount();
   const chainId = useChainId();
-  const wrongChain = isConnected && chainId !== baseSepolia.id;
+  const wrongChain = isConnected && chainId !== celo.id;
 
   const {
     nftCount,
@@ -88,32 +90,14 @@ export function ScratchGame() {
   );
   const [resultRarity, setResultRarity] = useState<number | null>(null);
   const [phase, setPhase] = useState<
-    "idle" | "confirm" | "vrf" | "done"
+    "idle" | "confirm" | "revealing" | "done"
   >("idle");
   const [shake, setShake] = useState(false);
   const [flashWin, setFlashWin] = useState(false);
   const [winOpen, setWinOpen] = useState(false);
   const [lossOpen, setLossOpen] = useState(false);
 
-  const receipt = useWaitForTransactionReceipt({
-    hash,
-    chainId: baseSepolia.id,
-    query: { enabled: !!hash },
-  });
-
-  useEffect(() => {
-    if (receipt.isSuccess && phase === "confirm") {
-      setPhase("vrf");
-      setListen(true);
-    }
-  }, [receipt.isSuccess, phase]);
-
-  useEffect(() => {
-    if (receipt.isError) {
-      setPhase("idle");
-      setHash(undefined);
-    }
-  }, [receipt.isError]);
+  const processedHash = useRef<Hex | undefined>();
 
   const onOutcome = useCallback((o: ScratchOutcome) => {
     setListen(false);
@@ -146,11 +130,68 @@ export function ScratchGame() {
   }, []);
 
   useWatchScratched(
-    useCallback((outcome: ScratchOutcome) => {
-      onOutcome(outcome);
-    }, [onOutcome]),
+    useCallback(
+      (outcome: ScratchOutcome) => {
+        onOutcome(outcome);
+      },
+      [onOutcome]
+    ),
     listen
   );
+
+  const receipt = useWaitForTransactionReceipt({
+    hash,
+    chainId: celo.id,
+    query: { enabled: !!hash },
+  });
+
+  useEffect(() => {
+    if (
+      receipt.isSuccess &&
+      receipt.data &&
+      hash &&
+      processedHash.current !== hash
+    ) {
+      processedHash.current = hash;
+      setPhase("revealing");
+
+      // Try to find the Scratched event in the receipt logs
+      try {
+        const logs = parseEventLogs({
+          abi: lootScratchAbi,
+          logs: receipt.data.logs,
+          eventName: "Scratched",
+        });
+
+        const myLog = logs.find(
+          (l) => l.args.player?.toLowerCase() === address?.toLowerCase()
+        );
+
+        if (myLog) {
+          // Show "REVEALING..." for 1.5s then show the result
+          setTimeout(() => {
+            onOutcome({
+              tokenId: myLog.args.tokenId as bigint,
+              rarity: Number(myLog.args.rarity),
+            });
+          }, 1500);
+          return;
+        }
+      } catch (err) {
+        console.error("Failed to parse scratch logs", err);
+      }
+
+      // Fallback to event listener if not found in logs
+      setListen(true);
+    }
+  }, [receipt.isSuccess, receipt.data, hash, address, onOutcome]);
+
+  useEffect(() => {
+    if (receipt.isError) {
+      setPhase("idle");
+      setHash(undefined);
+    }
+  }, [receipt.isError]);
 
   const scratchPct = useMemo(() => {
     const n = revealed.filter(Boolean).length;
@@ -207,7 +248,7 @@ export function ScratchGame() {
         </RetroCardHeader>
         <RetroCardContent className="space-y-4 text-center">
           <p className="font-sans text-sm text-muted-foreground">
-            Base Sepolia only. No test ETH? Grab some from a Base faucet.
+            Celo Mainnet only.
           </p>
           <div className="flex justify-center">
             <ConnectButton />
@@ -303,14 +344,14 @@ export function ScratchGame() {
               !isContractConfigured ||
               isPending ||
               phase === "confirm" ||
-              phase === "vrf"
+              phase === "revealing"
             }
             onClick={() => void runScratch().catch(() => {})}
           >
             {phase === "confirm"
               ? "CONFIRMING…"
-              : phase === "vrf"
-                ? "WAITING FOR CHAINLINK…"
+              : phase === "revealing"
+                ? "REVEALING…"
                 : isPending
                   ? "CHECK WALLET…"
                   : "SCRATCH (PAY)"}
@@ -319,13 +360,13 @@ export function ScratchGame() {
           <p className="font-sans text-center text-sm text-muted-foreground">
             Cost:{" "}
             {mintFee > 0n
-              ? `${formatEther(mintFee)} ETH`
+              ? `${formatEther(mintFee)} CELO`
               : "…"}{" "}
             per scratch
           </p>
           {sessionSpentWei > 0n && (
             <p className="font-sans text-center text-[11px] text-muted-foreground">
-              Session spend: {formatEther(sessionSpentWei)} ETH
+              Session spend: {formatEther(sessionSpentWei)} CELO
             </p>
           )}
           {error && (

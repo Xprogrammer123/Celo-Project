@@ -413,7 +413,7 @@ export function HomeClient() {
       {/* BOTTOM STRIP — yellow bar */}
       <div className="relative z-10 border-t-2 border-black bg-[#ffdb33] px-10 py-3 flex items-center justify-between">
         <span className="font-head text-[11px] font-black uppercase tracking-[0.2em] text-black">
-          on-chain · provably fair · celo alfajores
+          on-chain · provably fair · celo mainnet
         </span>
         <div className="flex gap-3">
           {["𝕏", "▶", "◆"].map((icon, i) => (
