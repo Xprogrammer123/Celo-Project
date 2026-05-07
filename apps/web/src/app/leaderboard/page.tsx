@@ -19,7 +19,7 @@ export default function LeaderboardPage() {
         LEGENDARY LEADERBOARD
       </h1>
       <p className="font-sans mb-8 text-sm text-muted-foreground">
-        Top 10 wallets by Legendary pulls (last ~50k blocks on Celo Alfajores).
+        Top 10 wallets by Legendary pulls (last ~50k blocks on Celo).
         Refreshes every 30 seconds.
       </p>
 

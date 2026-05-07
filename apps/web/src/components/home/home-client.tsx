@@ -319,9 +319,13 @@ export function HomeClient() {
             </div>
           </div>
 
+          <div className="mt-6 flex flex-col items-center justify-center border-4 border-black bg-white p-2 shadow-[8px_8px_0_0_#000]" style={{ transform: "rotate(1deg)" }}>
+            <img src="/banner.png" alt="Rova Banner" className="w-full max-w-2xl h-auto" />
+          </div>
+
           <p className="font-sans mt-7 max-w-sm text-base font-medium leading-relaxed text-black/55">
             Provably fair on-chain scratch cards.
-            No house tricks. Every result lives on Celo Alfajores — forever.
+            No house tricks. Every result lives on Celo — forever.
           </p>
 
           <div className="mt-8 flex items-center gap-5">
@@ -381,7 +385,7 @@ export function HomeClient() {
               </div>
               <h3 className="font-sans text-xl font-bold mb-2">Connect Wallet</h3>
               <p className="font-sans text-sm font-medium text-black/60">
-                Connect your Web3 wallet to the Celo Alfajores network to get started.
+                Connect your Web3 wallet to the Celo network to get started.
               </p>
             </div>
             <div>

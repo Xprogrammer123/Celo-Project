@@ -20,8 +20,9 @@ export function SiteHeader() {
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4">
         <Link
           href="/"
-          className="font-head text-xl font-black uppercase tracking-tight [-webkit-text-stroke:1px_black] md:text-2xl"
+          className="flex items-center gap-2 font-head text-xl font-black uppercase tracking-tight [-webkit-text-stroke:1px_black] md:text-2xl"
         >
+          <img src="/logo.png" alt="Rova Logo" className="h-8 w-8" />
           ROVA
         </Link>
         <nav className="hidden items-center gap-6 md:flex">
