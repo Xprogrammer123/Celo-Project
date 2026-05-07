@@ -5,11 +5,11 @@ import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import {ERC721Enumerable} from "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 import {Base64} from "@openzeppelin/contracts/utils/Base64.sol";
-import {VRFConsumerBaseV2Plus} from "@chainlink/contracts/src/v0.8/vrf/dev/VRFConsumerBaseV2Plus.sol";
-import {VRFV2PlusClient} from "@chainlink/contracts/src/v0.8/vrf/dev/libraries/VRFV2PlusClient.sol";
+import {VRFConsumerBaseV2} from "@chainlink/contracts/src/v0.8/vrf/VRFConsumerBaseV2.sol";
+import {VRFCoordinatorV2Interface} from "@chainlink/contracts/src/v0.8/vrf/interfaces/VRFCoordinatorV2Interface.sol";
 
-/// @title LootScratch — on-chain scratch cards with Chainlink VRF v2.5
-contract LootScratch is ERC721Enumerable, VRFConsumerBaseV2Plus {
+/// @title LootScratch — on-chain scratch cards with Chainlink VRF v2
+contract LootScratch is ERC721Enumerable, VRFConsumerBaseV2 {
     using Strings for uint256;
 
     uint8 public constant RARITY_COMMON = 0;
@@ -26,8 +26,9 @@ contract LootScratch is ERC721Enumerable, VRFConsumerBaseV2Plus {
     uint256 public totalScratches;
     uint256 public totalPlayers;
 
+    VRFCoordinatorV2Interface public immutable COORDINATOR;
     bytes32 public immutable i_keyHash;
-    uint256 public immutable i_subscriptionId;
+    uint64 public immutable i_subscriptionId;
     uint32 public immutable i_callbackGasLimit = 800_000;
     uint16 public immutable i_requestConfirmations = 3;
 
@@ -66,8 +67,9 @@ contract LootScratch is ERC721Enumerable, VRFConsumerBaseV2Plus {
     constructor(
         address vrfCoordinator,
         bytes32 keyHash,
-        uint256 subscriptionId
-    ) ERC721("Loot Scratch", "LOOT") VRFConsumerBaseV2Plus(vrfCoordinator) {
+        uint64 subscriptionId
+    ) ERC721("Loot Scratch", "LOOT") VRFConsumerBaseV2(vrfCoordinator) {
+        COORDINATOR = VRFCoordinatorV2Interface(vrfCoordinator);
         i_keyHash = keyHash;
         i_subscriptionId = subscriptionId;
     }
@@ -106,17 +108,13 @@ contract LootScratch is ERC721Enumerable, VRFConsumerBaseV2Plus {
             legendaryBoostPending[msg.sender] = false;
         }
 
-        VRFV2PlusClient.ExtraArgsV1 memory extra = VRFV2PlusClient.ExtraArgsV1({nativePayment: true});
-        VRFV2PlusClient.RandomWordsRequest memory req = VRFV2PlusClient.RandomWordsRequest({
-            keyHash: i_keyHash,
-            subId: i_subscriptionId,
-            requestConfirmations: i_requestConfirmations,
-            callbackGasLimit: i_callbackGasLimit,
-            numWords: 1,
-            extraArgs: VRFV2PlusClient._argsToBytes(extra)
-        });
-
-        uint256 requestId = s_vrfCoordinator.requestRandomWords(req);
+        uint256 requestId = COORDINATOR.requestRandomWords(
+            i_keyHash,
+            i_subscriptionId,
+            i_requestConfirmations,
+            i_callbackGasLimit,
+            1
+        );
         _pendingRequest[msg.sender] = true;
         _pending[requestId] = Pending({player: msg.sender, referrer: referrer, useLegendaryBoost: boost});
 
