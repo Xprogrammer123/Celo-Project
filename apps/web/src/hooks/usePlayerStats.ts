@@ -1,75 +1,67 @@
 "use client";
 
+import { useCallback } from "react";
 import { zeroAddress } from "viem";
-import { useAccount, useReadContract } from "wagmi";
+import { useAccount, useReadContract, useReadContracts } from "wagmi";
 import { lootScratchAbi } from "@/contracts";
 import { LOOT_SCRATCH_ADDRESS, isContractConfigured } from "@/constants/contract";
 
 export function usePlayerStats() {
   const { address } = useAccount();
   const enabled = isContractConfigured;
-  const player = address ?? zeroAddress;
+  const player  = address ?? zeroAddress;
 
-  const balance = useReadContract({
-    address: LOOT_SCRATCH_ADDRESS,
-    abi: lootScratchAbi,
-    functionName: "balanceOf",
-    args: [player],
+  // batch all reads into one RPC call
+  const { data, isLoading, refetch } = useReadContracts({
+    contracts: [
+      {
+        address: LOOT_SCRATCH_ADDRESS,
+        abi: lootScratchAbi,
+        functionName: "balanceOf",
+        args: [player],
+      },
+      {
+        address: LOOT_SCRATCH_ADDRESS,
+        abi: lootScratchAbi,
+        functionName: "scratchesToday",
+        args: [player],
+      },
+      {
+        address: LOOT_SCRATCH_ADDRESS,
+        abi: lootScratchAbi,
+        functionName: "streakDays",
+        args: [player],
+      },
+      {
+        address: LOOT_SCRATCH_ADDRESS,
+        abi: lootScratchAbi,
+        functionName: "totalScratches",
+      },
+      {
+        address: LOOT_SCRATCH_ADDRESS,
+        abi: lootScratchAbi,
+        functionName: "totalSupply",
+      },
+      {
+        address: LOOT_SCRATCH_ADDRESS,
+        abi: lootScratchAbi,
+        functionName: "totalPlayers",
+      },
+    ],
     query: { enabled: enabled && !!address },
   });
 
-  const scratchesDay = useReadContract({
-    address: LOOT_SCRATCH_ADDRESS,
-    abi: lootScratchAbi,
-    functionName: "scratchesToday",
-    args: [player],
-    query: { enabled: enabled && !!address },
-  });
-
-  const streak = useReadContract({
-    address: LOOT_SCRATCH_ADDRESS,
-    abi: lootScratchAbi,
-    functionName: "streakDays",
-    args: [player],
-    query: { enabled: enabled && !!address },
-  });
-
-  const totalScratches = useReadContract({
-    address: LOOT_SCRATCH_ADDRESS,
-    abi: lootScratchAbi,
-    functionName: "totalScratches",
-    query: { enabled },
-  });
-
-  const totalNfts = useReadContract({
-    address: LOOT_SCRATCH_ADDRESS,
-    abi: lootScratchAbi,
-    functionName: "totalSupply",
-    query: { enabled },
-  });
-
-  const totalPlayers = useReadContract({
-    address: LOOT_SCRATCH_ADDRESS,
-    abi: lootScratchAbi,
-    functionName: "totalPlayers",
-    query: { enabled },
-  });
-
-  const loading =
-    balance.isLoading ||
-    scratchesDay.isLoading ||
-    streak.isLoading ||
-    totalScratches.isLoading ||
-    totalNfts.isLoading ||
-    totalPlayers.isLoading;
+  const [balance, scratchDay, streak, totalScratches, totalNfts, totalPlayers] =
+    data ?? [];
 
   return {
-    nftCount: (balance.data as bigint | undefined) ?? 0n,
-    scratchesToday: (scratchesDay.data as bigint | undefined) ?? 0n,
-    streak: (streak.data as bigint | undefined) ?? 0n,
-    totalScratches: (totalScratches.data as bigint | undefined) ?? 0n,
-    totalNfts: (totalNfts.data as bigint | undefined) ?? 0n,
-    totalPlayers: (totalPlayers.data as bigint | undefined) ?? 0n,
-    isLoading: enabled ? loading : false,
+    nftCount:       (balance?.result       as bigint | undefined) ?? 0n,
+    scratchesToday: (scratchDay?.result     as bigint | undefined) ?? 0n,
+    streak:         (streak?.result         as bigint | undefined) ?? 0n,
+    totalScratches: (totalScratches?.result as bigint | undefined) ?? 0n,
+    totalNfts:      (totalNfts?.result      as bigint | undefined) ?? 0n,
+    totalPlayers:   (totalPlayers?.result   as bigint | undefined) ?? 0n,
+    isLoading:      enabled ? isLoading : false,
+    refetch,
   };
 }
