@@ -178,7 +178,7 @@ export function ScratchGame() {
 
   /* tx tracking */
   const [hash, setHash] = useState<Hex | undefined>();
-  const processedHash = useRef<Hex | undefined>();
+  const processedHash = useRef<Hex | undefined>(undefined);
 
   /* game state */
   const [phase, setPhase]               = useState<Phase>("idle");
@@ -361,7 +361,7 @@ export function ScratchGame() {
         <RetroCardContent className="space-y-4 text-center">
           <p className="font-sans text-sm text-muted-foreground">
             {wrongChain
-              ? "Switch to Celo Alfajores testnet to play."
+              ? "Switch to Celo Mainnet to play."
               : "Connect your wallet to start scratching."}
           </p>
           <div className="flex justify-center">
