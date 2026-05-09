@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { usePlayerStats } from "@/hooks/usePlayerStats";
-import { WinTicker } from "@/components/game/win-ticker";
 import { RetroButton } from "@/components/retroui/button";
 import {
   RetroDialog,
@@ -275,11 +274,6 @@ export function HomeClient() {
   return (
     <main className="relative min-h-screen overflow-x-hidden bg-[#fffef5]">
       <RetroBackground />
-
-      {/* win ticker */}
-      <WinTicker className="fixed left-0 right-0 top-0 z-20" />
-
-    
 
       {/* HERO SECTION */}
       <section className="relative z-10 mx-auto flex max-w-7xl flex-col-reverse items-center gap-12 px-8 py-16 md:flex-row md:items-center md:justify-between">
