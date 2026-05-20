@@ -2,9 +2,9 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { cn } from "@/lib/utils";
 import { useRovaBalance } from "@/hooks/useRovaBalance";
+import { WalletProfileButton } from "@/components/wallet-profile-button";
 
 const links = [
   { href: "/", label: "HOME" },
@@ -46,7 +46,7 @@ export function SiteHeader() {
           >
             {hydrated ? `${balance} ROVA` : "ROVA"}
           </Link>
-          <ConnectButton showBalance={false} chainStatus="icon" />
+          <WalletProfileButton />
         </nav>
         <div className="flex items-center gap-2 md:hidden">
           <Link
@@ -55,7 +55,7 @@ export function SiteHeader() {
           >
             {hydrated ? `${balance} ROVA` : "ROVA"}
           </Link>
-          <ConnectButton showBalance={false} chainStatus="icon" />
+          <WalletProfileButton />
         </div>
       </div>
       <div className="flex gap-2 overflow-x-auto border-t border-black px-4 py-2 md:hidden">

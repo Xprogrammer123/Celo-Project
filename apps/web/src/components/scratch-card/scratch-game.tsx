@@ -7,6 +7,12 @@ import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { configuredChain } from "@/constants/chains";
 import { ROVA_PER_GAME } from "@/constants/rova";
 import { isContractConfigured } from "@/constants/contract";
+import {
+  DEMO_PLAYER_ID,
+  recordNftRun,
+  recordRoundWin,
+  type LeaderboardMode,
+} from "@/lib/player-profile";
 import { usePlayerStats } from "@/hooks/usePlayerStats";
 import { useRovaBalance } from "@/hooks/useRovaBalance";
 import { RetroButton } from "@/components/retroui/button";
@@ -268,7 +274,7 @@ function NftFoundBadge({ found }: { found: number }) {
 /* ─── MAIN ───────────────────────────────────────────── */
 
 export function ScratchGame() {
-  const { isConnected } = useAccount();
+  const { address, isConnected } = useAccount();
   const chainId = useChainId();
   const wrongChain = isConnected && chainId !== configuredChain.id;
   const isDemo = !isContractConfigured;
@@ -332,6 +338,10 @@ export function ScratchGame() {
 
       setTimeout(() => {
         if (won) {
+          const mode: LeaderboardMode = demoMode ? "demo" : "real";
+          const playerId = address?.toLowerCase() ?? DEMO_PLAYER_ID;
+          recordRoundWin(mode, playerId);
+
           const nextWins = winStreak + 1;
           setWinStreak(nextWins);
           void confetti({
@@ -342,6 +352,7 @@ export function ScratchGame() {
           });
 
           if (nextWins >= WINS_NEEDED) {
+            recordNftRun(mode, playerId);
             if (demoMode) {
               setPhase("roundOver");
               setDialogType("demoComplete");
@@ -366,7 +377,7 @@ export function ScratchGame() {
         }
       }, 1200);
     },
-    [winStreak, refetchStats, demoMode]
+    [winStreak, refetchStats, demoMode, address]
   );
 
   const handleFlip = useCallback(
