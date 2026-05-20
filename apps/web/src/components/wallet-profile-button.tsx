@@ -1,9 +1,14 @@
 "use client";
 
 import { useState } from "react";
+import { formatEther } from "viem";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
-import { useDisconnect } from "wagmi";
+import { useBalance, useDisconnect } from "wagmi";
+import { configuredChain } from "@/constants/chains";
 import { usePlayerUsername } from "@/hooks/usePlayerUsername";
+import { useRovaBalance } from "@/hooks/useRovaBalance";
+import { useBuyRova } from "@/hooks/useBuyRova";
+import { CELO_PER_GAME, ROVA_PER_GAME } from "@/constants/rova";
 import { displayName, formatPlayerId } from "@/lib/player-profile";
 import { RetroButton } from "@/components/retroui/button";
 import {
@@ -14,10 +19,24 @@ import {
 } from "@/components/retroui/dialog";
 import { RetroInput } from "@/components/retroui/input";
 
+function formatCelo(wei: bigint | undefined) {
+  if (wei === undefined) return "—";
+  const n = Number(formatEther(wei));
+  if (n === 0) return "0";
+  if (n < 0.0001) return "<0.0001";
+  return n.toLocaleString(undefined, { maximumFractionDigits: 4 });
+}
+
 export function WalletProfileButton() {
   const { disconnect } = useDisconnect();
   const { playerId, username, hydrated, isConnected, saveUsername } =
     usePlayerUsername();
+  const { balance: rovaBalance, hydrated: rovaHydrated } = useRovaBalance();
+  const { buyOneGame, isBuying, canBuyOneGame } = useBuyRova();
+  const { data: celoBalance, isLoading: celoLoading } = useBalance({
+    address: isConnected ? (playerId as `0x${string}`) : undefined,
+    chainId: configuredChain.id,
+  });
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState("");
 
@@ -64,9 +83,31 @@ export function WalletProfileButton() {
           <RetroDialogTitle>WALLET PROFILE</RetroDialogTitle>
           <RetroDialogDescription className="font-sans text-foreground mt-2 space-y-4">
             {isConnected && (
-              <p className="text-xs text-muted-foreground break-all font-mono">
-                {playerId}
-              </p>
+              <>
+                <p className="text-xs text-muted-foreground break-all font-mono">
+                  {playerId}
+                </p>
+                <div className="grid grid-cols-2 gap-2 border-2 border-black bg-muted p-3">
+                  <div>
+                    <p className="font-sans text-[9px] uppercase tracking-widest text-muted-foreground">
+                      CELO balance
+                    </p>
+                    <p className="font-head text-xl tabular-nums">
+                      {celoLoading
+                        ? "…"
+                        : `${formatCelo(celoBalance?.value)} CELO`}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="font-sans text-[9px] uppercase tracking-widest text-muted-foreground">
+                      ROVA balance
+                    </p>
+                    <p className="font-head text-xl tabular-nums text-primary">
+                      {rovaHydrated ? rovaBalance : "…"} ROVA
+                    </p>
+                  </div>
+                </div>
+              </>
             )}
 
             <div className="space-y-2">
@@ -88,6 +129,19 @@ export function WalletProfileButton() {
                 characters.
               </p>
             </div>
+
+            {isConnected && (
+              <RetroButton
+                type="button"
+                className="w-full"
+                disabled={isBuying || !canBuyOneGame}
+                onClick={() => void buyOneGame()}
+              >
+                {isBuying
+                  ? "CONFIRMING..."
+                  : `BUY 1 REAL GAME (${CELO_PER_GAME} CELO)`}
+              </RetroButton>
+            )}
 
             <div className="grid gap-2">
               <RetroButton

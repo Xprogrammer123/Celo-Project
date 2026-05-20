@@ -1,455 +1,439 @@
 "use client";
 
 import Link from "next/link";
-import { usePlayerStats } from "@/hooks/usePlayerStats";
-import { RetroButton } from "@/components/retroui/button";
 import {
-  RetroDialog,
-  RetroDialogClose,
-  RetroDialogContent,
-  RetroDialogDescription,
-  RetroDialogTitle,
-  RetroDialogTrigger,
-} from "@/components/retroui/dialog";
+  CELO_PER_GAME,
+  ROVA_PER_CELO,
+  ROVA_PER_GAME,
+} from "@/constants/rova";
+import { isContractConfigured } from "@/constants/contract";
+import { usePlayerStats } from "@/hooks/usePlayerStats";
+import {
+  NFT_SHOWCASE,
+  NFT_PRIZE_PREVIEW,
+  nftPreviewImage,
+} from "@/lib/nft-preview-art";
+import { RetroButton } from "@/components/retroui/button";
+import { RetroBadge } from "@/components/retroui/badge";
 
-/* ────────────────────────────────────────────────────────
-   FIXED GRID BACKGROUND
-──────────────────────────────────────────────────────── */
+const TICKER = [
+  "★ MATCH THE NFT ★",
+  "3 TRIALS ONLY",
+  "LOSE ONCE = STREAK GONE",
+  "0.25 CELO PER GAME",
+  "DEMO IS FREE",
+  "ON-CHAIN CELO",
+  "3 WINS = MINT",
+];
+
 function RetroBackground() {
   return (
     <svg
       aria-hidden="true"
-      className="pointer-events-none fixed inset-0 h-full w-full"
+      className="pointer-events-none fixed inset-0 h-full w-full opacity-50"
       xmlns="http://www.w3.org/2000/svg"
     >
       <defs>
-        <pattern id="grid" x="0" y="0" width="36" height="36" patternUnits="userSpaceOnUse">
-          <path d="M 36 0 L 0 0 0 36" fill="none" stroke="#000" strokeWidth="0.4" opacity="0.1" />
+        <pattern
+          id="home-grid"
+          width="36"
+          height="36"
+          patternUnits="userSpaceOnUse"
+        >
+          <path
+            d="M 36 0 L 0 0 0 36"
+            fill="none"
+            stroke="#000"
+            strokeWidth="0.5"
+            opacity="0.07"
+          />
         </pattern>
       </defs>
-      <rect width="100%" height="100%" fill="url(#grid)" />
+      <rect width="100%" height="100%" fill="url(#home-grid)" />
     </svg>
   );
 }
 
-/* ────────────────────────────────────────────────────────
-   SVG CHARACTER CARDS
-──────────────────────────────────────────────────────── */
-
-/** Card 1: Scratch Demon — holds a scratch card, horns, grin */
-function ScratchDemonCard() {
+function MarqueeTicker() {
+  const line = [...TICKER, ...TICKER];
   return (
-    <div
-      className="card-bob cb1"
-      style={{
-        width: 155,
-        border: "3px solid #000",
-        background: "#ffdb33",
-        boxShadow: "7px 7px 0 0 #000",
-        overflow: "hidden",
-        flexShrink: 0,
-      }}
-    >
-      <svg viewBox="0 0 155 200" xmlns="http://www.w3.org/2000/svg" width="155" height="200">
-        <defs>
-          <pattern id="chk" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse">
-            <rect width="10" height="10" fill="#ffd000" />
-            <rect x="10" y="10" width="10" height="10" fill="#ffd000" />
-            <rect x="10" y="0" width="10" height="10" fill="#ffdb33" />
-            <rect x="0" y="10" width="10" height="10" fill="#ffdb33" />
-          </pattern>
-        </defs>
-        {/* bg */}
-        <rect width="155" height="200" fill="url(#chk)" />
-        {/* horns */}
-        <polygon points="50,54 40,24 64,46" fill="#000" />
-        <polygon points="105,54 115,24 91,46" fill="#000" />
-        {/* head */}
-        <rect x="36" y="50" width="83" height="58" fill="#ffdb33" stroke="#000" strokeWidth="2.5" />
-        {/* eyes */}
-        <rect x="46" y="62" width="22" height="20" fill="#fff" stroke="#000" strokeWidth="2" />
-        <rect x="87" y="62" width="22" height="20" fill="#fff" stroke="#000" strokeWidth="2" />
-        <rect x="53" y="66" width="9" height="12" fill="#000" />
-        <rect x="94" y="66" width="9" height="12" fill="#000" />
-        <rect x="60" y="67" width="3" height="3" fill="#fff" />
-        <rect x="101" y="67" width="3" height="3" fill="#fff" />
-        {/* grin */}
-        <rect x="54" y="90" width="47" height="7" fill="#000" />
-        <rect x="57" y="90" width="8" height="11" fill="#ffdb33" />
-        <rect x="90" y="90" width="8" height="11" fill="#ffdb33" />
-        {/* body */}
-        <rect x="44" y="106" width="67" height="62" fill="#000" />
-        {/* scratch card in left hand */}
-        <rect x="10" y="108" width="34" height="48" fill="#fff" stroke="#000" strokeWidth="2.5" />
-        <line x1="14" y1="120" x2="40" y2="120" stroke="#aaa" strokeWidth="1.5" strokeDasharray="4 2" />
-        <rect x="14" y="126" width="26" height="5" fill="#ffdb33" />
-        <text x="18" y="131" fontSize="9" fill="#000" fontFamily="monospace" fontWeight="bold">★★★</text>
-        <line x1="14" y1="136" x2="40" y2="136" stroke="#aaa" strokeWidth="1.5" strokeDasharray="4 2" />
-        <line x1="14" y1="143" x2="40" y2="143" stroke="#aaa" strokeWidth="1.5" strokeDasharray="4 2" />
-        {/* arm */}
-        <rect x="10" y="106" width="34" height="12" fill="#000" />
-        {/* right arm */}
-        <rect x="111" y="106" width="34" height="12" fill="#000" />
-        <circle cx="128" cy="126" r="12" fill="#ffdb33" stroke="#000" strokeWidth="2.5" />
-        <text x="128" y="131" textAnchor="middle" fontSize="14" fill="#000">✦</text>
-        {/* legs */}
-        <rect x="54" y="166" width="18" height="24" fill="#000" />
-        <rect x="83" y="166" width="18" height="24" fill="#000" />
-        <rect x="48" y="182" width="28" height="10" fill="#ffdb33" stroke="#000" strokeWidth="2" />
-        <rect x="79" y="182" width="28" height="10" fill="#ffdb33" stroke="#000" strokeWidth="2" />
-        {/* label bar */}
-        <rect x="0" y="188" width="155" height="12" fill="#000" />
-        <text x="77" y="198" textAnchor="middle" fontSize="8" fontWeight="bold" fill="#ffdb33" fontFamily="monospace" letterSpacing="2">SCRATCH DEMON</text>
-      </svg>
-    </div>
-  );
-}
-
-/** Card 2: Lucky Coin — big round face, $, always grinning */
-function LuckyCoinCard() {
-  return (
-    <div
-      className="card-bob cb2"
-      style={{
-        width: 155,
-        border: "3px solid #000",
-        background: "#fff",
-        boxShadow: "7px 7px 0 0 #000",
-        overflow: "hidden",
-        flexShrink: 0,
-      }}
-    >
-      <svg viewBox="0 0 155 200" xmlns="http://www.w3.org/2000/svg" width="155" height="200">
-        <defs>
-          <pattern id="zz" x="0" y="0" width="20" height="10" patternUnits="userSpaceOnUse">
-            <polyline points="0,10 10,0 20,10" fill="none" stroke="#e8e8e8" strokeWidth="1.5" />
-          </pattern>
-        </defs>
-        <rect width="155" height="200" fill="url(#zz)" />
-        {/* coin */}
-        <circle cx="77" cy="96" r="60" fill="#ffdb33" stroke="#000" strokeWidth="3" />
-        <circle cx="77" cy="96" r="50" fill="none" stroke="#000" strokeWidth="1.5" strokeDasharray="5 4" opacity="0.25" />
-        {/* $ */}
-        <text x="77" y="58" textAnchor="middle" fontSize="18" fontWeight="bold" fill="#000" fontFamily="monospace">$</text>
-        {/* eyes */}
-        <ellipse cx="60" cy="84" rx="13" ry="15" fill="#fff" stroke="#000" strokeWidth="2.5" />
-        <ellipse cx="94" cy="84" rx="13" ry="15" fill="#fff" stroke="#000" strokeWidth="2.5" />
-        <ellipse cx="62" cy="86" rx="6" ry="7" fill="#000" />
-        <ellipse cx="96" cy="86" rx="6" ry="7" fill="#000" />
-        <circle cx="64" cy="83" r="2" fill="#fff" />
-        <circle cx="98" cy="83" r="2" fill="#fff" />
-        {/* grin */}
-        <path d="M 53 108 Q 77 130 101 108" stroke="#000" strokeWidth="3" fill="none" strokeLinecap="round" />
-        <line x1="53"  y1="108" x2="53"  y2="114" stroke="#000" strokeWidth="2.5" strokeLinecap="round" />
-        <line x1="101" y1="108" x2="101" y2="114" stroke="#000" strokeWidth="2.5" strokeLinecap="round" />
-        {/* side hands */}
-        <circle cx="18"  cy="96" r="13" fill="#ffdb33" stroke="#000" strokeWidth="2.5" />
-        <text x="18"  y="101" textAnchor="middle" fontSize="13" fill="#000">✦</text>
-        <circle cx="136" cy="96" r="13" fill="#ffdb33" stroke="#000" strokeWidth="2.5" />
-        <text x="136" y="101" textAnchor="middle" fontSize="13" fill="#000">✦</text>
-        {/* legs */}
-        <rect x="57" y="153" width="16" height="26" fill="#ffdb33" stroke="#000" strokeWidth="2.5" />
-        <rect x="82" y="153" width="16" height="26" fill="#ffdb33" stroke="#000" strokeWidth="2.5" />
-        <rect x="50" y="170" width="26" height="11" fill="#000" />
-        <rect x="79" y="170" width="26" height="11" fill="#000" />
-        {/* label */}
-        <rect x="0" y="188" width="155" height="12" fill="#000" />
-        <text x="77" y="198" textAnchor="middle" fontSize="8" fontWeight="bold" fill="#ffdb33" fontFamily="monospace" letterSpacing="3">LUCKY COIN</text>
-      </svg>
-    </div>
-  );
-}
-
-/** Card 3: The Legend — ghost with crown, black bg, gold glow */
-function LegendCard() {
-  return (
-    <div
-      className="card-bob cb3"
-      style={{
-        width: 155,
-        border: "3px solid #000",
-        background: "#0a0a0a",
-        boxShadow: "7px 7px 0 0 #ffdb33",
-        overflow: "hidden",
-        flexShrink: 0,
-      }}
-    >
-      <svg viewBox="0 0 155 200" xmlns="http://www.w3.org/2000/svg" width="155" height="200">
-        <defs>
-          <pattern id="dts" x="0" y="0" width="16" height="16" patternUnits="userSpaceOnUse">
-            <circle cx="8" cy="8" r="1.2" fill="#1a1a1a" />
-          </pattern>
-        </defs>
-        <rect width="155" height="200" fill="url(#dts)" />
-        {/* legendary badge top */}
-        <rect x="12" y="8" width="131" height="18" fill="#ffdb33" />
-        <text x="77" y="21" textAnchor="middle" fontSize="8" fontWeight="bold" fill="#000" fontFamily="monospace" letterSpacing="2">★ LEGENDARY ★</text>
-        {/* ghost body */}
-        <rect x="28" y="66" width="99" height="82" fill="#ffdb33" />
-        {/* rounded top */}
-        <ellipse cx="77" cy="66" rx="49" ry="24" fill="#ffdb33" />
-        {/* wavy bottom */}
-        <rect x="28" y="126" width="99" height="22" fill="#ffdb33" />
-        <ellipse cx="44"  cy="150" rx="11" ry="10" fill="#0a0a0a" />
-        <ellipse cx="66"  cy="146" rx="11" ry="10" fill="#ffdb33" />
-        <ellipse cx="88"  cy="150" rx="11" ry="10" fill="#0a0a0a" />
-        <ellipse cx="110" cy="146" rx="11" ry="10" fill="#ffdb33" />
-        <ellipse cx="126" cy="150" rx="11" ry="10" fill="#0a0a0a" />
-        {/* eyes */}
-        <ellipse cx="60" cy="92" rx="15" ry="18" fill="#0a0a0a" />
-        <ellipse cx="94" cy="92" rx="15" ry="18" fill="#0a0a0a" />
-        <ellipse cx="62" cy="89" rx="5"  ry="7"  fill="#fff" />
-        <ellipse cx="96" cy="89" rx="5"  ry="7"  fill="#fff" />
-        {/* crown */}
-        <polygon points="40,66 50,38 62,58 77,32 92,58 104,38 115,66" fill="#ffdb33" stroke="#0a0a0a" strokeWidth="2" />
-        <circle cx="50"  cy="38" r="4" fill="#0a0a0a" />
-        <circle cx="77"  cy="32" r="5" fill="#0a0a0a" />
-        <circle cx="104" cy="38" r="4" fill="#0a0a0a" />
-        {/* sparkles */}
-        <text x="12"  y="86" fontSize="14" fill="#ffdb33" fontFamily="serif">✦</text>
-        <text x="132" y="76" fontSize="10" fill="#ffdb33" fontFamily="serif">✦</text>
-        <text x="138" y="105" fontSize="7" fill="#ffdb33" fontFamily="serif">✦</text>
-        {/* label */}
-        <rect x="0" y="188" width="155" height="12" fill="#ffdb33" />
-        <text x="77" y="198" textAnchor="middle" fontSize="8" fontWeight="bold" fill="#000" fontFamily="monospace" letterSpacing="2">THE LEGEND</text>
-      </svg>
-    </div>
-  );
-}
-
-/* ────────────────────────────────────────────────────────
-   FLOATING STAR SVG
-──────────────────────────────────────────────────────── */
-function FloatingStar({
-  size = 28,
-  delay = "0s",
-  fill = "#ffdb33",
-}: {
-  size?: number;
-  delay?: string;
-  fill?: string;
-}) {
-  return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 32 32"
-      aria-hidden="true"
-      style={{ animation: `starFloat 3.5s ease-in-out infinite`, animationDelay: delay }}
-    >
-      <polygon
-        points="16,2 19,11 29,11 21,17 24,26 16,20 8,26 11,17 3,11 13,11"
-        fill={fill}
-        stroke="#000"
-        strokeWidth="1.5"
-      />
-    </svg>
-  );
-}
-
-/* ────────────────────────────────────────────────────────
-   STAT BLOCK
-──────────────────────────────────────────────────────── */
-function StatBlock({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="border-2 border-black bg-white px-4 py-3 text-center shadow-[4px_4px_0_0_#000]">
-      <div className="font-head text-2xl tabular-nums">{value}</div>
-      <div className="font-sans text-[10px] font-bold uppercase tracking-widest text-muted-foreground mt-0.5">
-        {label}
+    <div className="relative z-20 overflow-hidden border-y-2 border-black bg-secondary py-2">
+      <div className="animate-home-marquee flex w-max gap-8 whitespace-nowrap">
+        {line.map((t, i) => (
+          <span
+            key={`${t}-${i}`}
+            className="font-head text-xs font-black uppercase tracking-[0.25em] text-secondary-foreground"
+          >
+            {t}
+          </span>
+        ))}
       </div>
     </div>
   );
 }
 
-/* ────────────────────────────────────────────────────────
-   HOME CLIENT
-──────────────────────────────────────────────────────── */
+function NftCard({
+  rarity,
+  label,
+  tokenId,
+  uid,
+  size = "md",
+  tilt = 0,
+}: {
+  rarity: 0 | 1 | 2 | 3;
+  label: string;
+  tokenId: number;
+  uid: string;
+  size?: "sm" | "md" | "lg";
+  tilt?: number;
+}) {
+  const variants = {
+    sm: "w-28",
+    md: "w-40 md:w-48",
+    lg: "w-52 md:w-64",
+  };
+  const badgeVariant = ["common", "rare", "epic", "legendary"] as const;
+
+  return (
+    <div
+      className={`${variants[size]} shrink-0 transition-transform hover:scale-105 hover:-translate-y-1`}
+      style={{ transform: `rotate(${tilt}deg)` }}
+    >
+      <div
+        className="border-[3px] border-black bg-card overflow-hidden shadow-[var(--shadow-xl)]"
+        style={{
+          boxShadow:
+            rarity === 3
+              ? "8px 8px 0 0 #000, 0 0 28px rgba(255,215,0,0.45)"
+              : rarity === 2
+                ? "8px 8px 0 0 #000, 0 0 18px rgba(156,39,176,0.35)"
+                : "8px 8px 0 0 #000",
+        }}
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={nftPreviewImage(rarity, tokenId, uid)}
+          alt={`${label} NFT #${tokenId}`}
+          className="aspect-square w-full object-cover"
+        />
+        <div className="flex items-center justify-between border-t-2 border-black bg-black px-2 py-1.5">
+          <RetroBadge variant={badgeVariant[rarity]} className="text-[9px]">
+            {label}
+          </RetroBadge>
+          <span className="font-mono text-[10px] text-primary">#{tokenId}</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function BoardPreview() {
+  const tiles: Array<"?" | "rova" | "nft"> = [
+    "?", "rova", "?", "?",
+    "?", "?", "nft", "rova",
+    "?", "nft", "?", "?",
+  ];
+
+  return (
+    <div className="border-[3px] border-black bg-primary p-4 shadow-[var(--shadow-xl)] animate-home-wiggle">
+      <p className="font-head text-center text-[11px] font-black uppercase tracking-[0.35em] mb-3">
+        ★ live board ★
+      </p>
+      <div className="grid grid-cols-4 gap-1.5 max-w-[280px] mx-auto">
+        {tiles.map((t, i) => (
+          <div
+            key={i}
+            className="aspect-square border-2 border-black overflow-hidden flex items-center justify-center"
+            style={{
+              background: t === "nft" ? "#0a0a0a" : "#fffef5",
+            }}
+          >
+            {t === "?" && (
+              <span className="font-head text-xl text-black/25">?</span>
+            )}
+            {t === "rova" && (
+              <img src="/logo.png" alt="" className="h-[70%] w-[70%] object-contain" />
+            )}
+            {t === "nft" && (
+              <img
+                src={NFT_PRIZE_PREVIEW}
+                alt="NFT prize"
+                className="h-full w-full object-cover"
+              />
+            )}
+          </div>
+        ))}
+      </div>
+      <p className="font-head text-center text-[10px] uppercase mt-2 tracking-widest">
+        find both NFT prizes → win
+      </p>
+    </div>
+  );
+}
+
 export function HomeClient() {
   const { totalScratches, totalNfts, totalPlayers, isLoading } =
     usePlayerStats();
 
   const fmt = (n: bigint) =>
-    n >= 100000n ? `${(Number(n) / 1000).toFixed(0)}k` : n.toString();
+    n >= 1000n ? `${(Number(n) / 1000).toFixed(1)}k` : n.toString();
 
   return (
-    <main className="relative min-h-screen overflow-x-hidden bg-[#fffef5]">
+    <main className="relative min-h-screen overflow-x-hidden bg-background">
       <RetroBackground />
+      <MarqueeTicker />
 
-      {/* HERO SECTION */}
-      <section className="relative z-10 mx-auto flex max-w-7xl flex-col-reverse items-center gap-12 px-8 py-16 md:flex-row md:items-center md:justify-between">
-
-        {/* LEFT — text */}
-        <div className="max-w-[480px]">
-          {/* tier pills */}
-          <div className="mb-5 flex flex-wrap gap-2">
-            {[
-              { label: "60% Common",    bg: "#e5e5e5", fg: "#555" },
-              { label: "25% Rare",      bg: "#ffdb33", fg: "#000" },
-              { label: "12% Epic",      bg: "#c084fc", fg: "#000" },
-              { label: "3% Legendary",  bg: "#000",    fg: "#ffdb33" },
-            ].map(({ label, bg, fg }) => (
-              <span
-                key={label}
-                className="font-sans border-2 border-black px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest shadow-[2px_2px_0_0_#000]"
-                style={{ background: bg, color: fg }}
-              >
-                {label}
+      {/* HERO */}
+      <section className="relative z-10 mx-auto max-w-7xl px-4 py-10 md:px-8 md:py-14">
+        <div className="flex flex-col gap-10 lg:flex-row lg:items-center lg:justify-between">
+          <div className="max-w-xl">
+            <div
+              className="inline-block border-4 border-black bg-primary px-4 py-1 shadow-[6px_6px_0_0_#000] mb-4 animate-home-wiggle"
+              style={{ transform: "rotate(-2deg)" }}
+            >
+              <span className="font-head text-sm font-black uppercase tracking-[0.2em]">
+                memory game · celo · nft mint
               </span>
+            </div>
+
+            <h1 className="font-head text-[clamp(3rem,12vw,6.5rem)] font-black uppercase leading-[0.85] tracking-tighter">
+              MATCH
+              <span className="block text-primary [-webkit-text-stroke:3px_#000]">
+                THE NFT
+              </span>
+            </h1>
+
+            <p className="font-sans mt-5 text-lg font-medium leading-snug max-w-md">
+              Flip. Remember. Sweat.{" "}
+              <span className="bg-primary px-1 border-2 border-black">
+                3 wins in a row
+              </span>{" "}
+              and the chain mints your loot. One bad round? Streak deleted. Gone.
+              Zero mercy.
+            </p>
+
+            <div className="mt-8 flex flex-wrap gap-3">
+              <Link href="/play">
+                <RetroButton size="lg" className="text-base shadow-[var(--shadow-xl)]">
+                  ★ PLAY FOR REAL
+                </RetroButton>
+              </Link>
+              <Link href="/play">
+                <RetroButton size="lg" variant="outline">
+                  FREE DEMO
+                </RetroButton>
+              </Link>
+            </div>
+
+            <div className="mt-8 grid grid-cols-3 gap-2">
+              {[
+                {
+                  label: isContractConfigured ? "Plays" : "Chain",
+                  val: isContractConfigured
+                    ? isLoading
+                      ? "…"
+                      : fmt(totalScratches)
+                    : "CELO",
+                },
+                {
+                  label: isContractConfigured ? "Minted" : "Cost",
+                  val: isContractConfigured
+                    ? isLoading
+                      ? "…"
+                      : fmt(totalNfts)
+                    : CELO_PER_GAME,
+                },
+                {
+                  label: isContractConfigured ? "Degens" : "Streak",
+                  val: isContractConfigured
+                    ? isLoading
+                      ? "…"
+                      : fmt(totalPlayers)
+                    : "3",
+                },
+              ].map((s) => (
+                <div
+                  key={s.label}
+                  className="border-2 border-black bg-card py-3 text-center shadow-[var(--shadow-md)]"
+                >
+                  <p className="font-head text-2xl">{s.val}</p>
+                  <p className="font-sans text-[9px] uppercase tracking-widest text-muted-foreground">
+                    {s.label}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="relative flex flex-col items-center gap-6 lg:w-[48%]">
+            <BoardPreview />
+            <div className="absolute -left-4 top-8 hidden lg:block animate-home-float">
+              <NftCard rarity={3} label="LEGENDARY" tokenId={1} uid="h1" size="sm" tilt={-8} />
+            </div>
+            <div
+              className="absolute -right-2 bottom-4 hidden lg:block animate-home-float"
+              style={{ animationDelay: "1s" }}
+            >
+              <NftCard rarity={2} label="EPIC" tokenId={88} uid="h2" size="sm" tilt={6} />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* REAL NFT COLLECTION — on-chain art */}
+      <section className="relative z-10 border-y-2 border-black bg-muted py-12 md:py-16">
+        <div className="mx-auto max-w-7xl px-4 md:px-8">
+          <div className="mb-8 text-center md:text-left">
+            <h2 className="font-head text-3xl md:text-5xl font-black uppercase tracking-tight">
+              Real on-chain NFT art
+            </h2>
+            <p className="font-sans mt-2 text-muted-foreground max-w-xl">
+              Every mint is a unique SVG stored on Celo — same art you chase on
+              the board. Common to Legendary. No fakes. No PNGs glued on.
+            </p>
+          </div>
+
+          <div className="flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory md:justify-center md:overflow-visible md:flex-wrap">
+            {NFT_SHOWCASE.map((n, i) => (
+              <div key={n.label} className="snap-center">
+                <NftCard
+                  rarity={n.id}
+                  label={n.label}
+                  tokenId={n.tokenId}
+                  uid={`show-${i}`}
+                  size="lg"
+                  tilt={i % 2 === 0 ? -3 : 3}
+                />
+              </div>
             ))}
           </div>
 
-          {/* big title */}
-          <div style={{ transform: "rotate(-2deg)", transformOrigin: "left center" }}>
-            <h1 className="font-head text-[80px] font-black uppercase leading-[0.88] tracking-tighter text-black md:text-[100px]">
-              ROVA
-            </h1>
-            <div
-              className="mt-1 inline-block border-4 border-black bg-[#ffdb33] px-3 py-0.5 shadow-[6px_6px_0_0_#000]"
-              style={{ transform: "rotate(1deg)" }}
-            >
-              <span className="font-head text-[48px] font-black uppercase leading-none tracking-tight text-black md:text-[60px]">
-                IS NOW!
-              </span>
-            </div>
-          </div>
-
-          <div className="mt-6 flex flex-col items-center justify-center border-4 border-black bg-white p-2 shadow-[8px_8px_0_0_#000]" style={{ transform: "rotate(1deg)" }}>
-            <img src="/banner.png" alt="Rova Banner" className="w-full max-w-2xl h-auto" />
-          </div>
-
-          <p className="font-sans mt-7 max-w-sm text-base font-medium leading-relaxed text-black/55">
-            Provably fair on-chain scratch cards.
-            No house tricks. Every result lives on Celo — forever.
+          <p className="font-head text-center text-xs uppercase tracking-[0.3em] mt-6 text-muted-foreground">
+            ↑ these are the actual contract designs ↑
           </p>
+        </div>
+      </section>
 
-          <div className="mt-8 flex items-center gap-5">
+      {/* HOW TO PLAY — arcade style */}
+      <section className="relative z-10 mx-auto max-w-7xl px-4 py-14 md:px-8">
+        <h2 className="font-head text-4xl font-black uppercase text-center mb-10 md:text-5xl">
+          How you win (or cry)
+        </h2>
+
+        <div className="grid gap-6 md:grid-cols-3">
+          {[
+            {
+              n: "01",
+              title: "Shuffle & hunt",
+              body: "4×3 board. 10 ROVA decoys. 2 real NFT prize cards hiding. Every game reshuffles. Your brain is the weapon.",
+              bg: "bg-primary",
+              img: NFT_PRIZE_PREVIEW,
+            },
+            {
+              n: "02",
+              title: "3 trials only",
+              body: "Pick 2 cards per trial. Wrong pair? They slam shut face-down. Epic + random? Still shuts. Remember everything.",
+              bg: "bg-[#7e22ce] text-white",
+              img: nftPreviewImage(2, 42, "s2"),
+            },
+            {
+              n: "03",
+              title: "3/3 or bust",
+              body: "Win 3 rounds straight → NFT minted to your wallet. Lose once at 2/3? Back to 0/3. Maximum pain. Maximum hype.",
+              bg: "bg-black text-[#ffd700]",
+              img: nftPreviewImage(3, 1, "s3"),
+            },
+          ].map((step) => (
+            <div
+              key={step.n}
+              className="border-[3px] border-black bg-card overflow-hidden shadow-[var(--shadow-xl)] hover:-translate-y-1 transition-transform"
+            >
+              <div className="relative aspect-[4/3] border-b-2 border-black overflow-hidden">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={step.img}
+                  alt=""
+                  className="h-full w-full object-cover"
+                />
+                <span
+                  className={`absolute top-2 left-2 font-head text-4xl font-black px-2 border-2 border-black ${step.bg}`}
+                >
+                  {step.n}
+                </span>
+              </div>
+              <div className="p-5">
+                <h3 className="font-head text-xl uppercase mb-2">{step.title}</h3>
+                <p className="font-sans text-sm text-muted-foreground leading-relaxed">
+                  {step.body}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* PRIZE SPOTLIGHT */}
+      <section className="relative z-10 mx-auto max-w-7xl px-4 pb-14 md:px-8">
+        <div className="grid gap-8 lg:grid-cols-2 items-center">
+          <div className="flex justify-center gap-4">
+            <NftCard rarity={3} label="LEGENDARY" tokenId={1} uid="spot1" size="lg" tilt={-5} />
+            <NftCard rarity={2} label="EPIC PRIZE" tokenId={88} uid="spot2" size="lg" tilt={4} />
+          </div>
+          <div className="border-[3px] border-black bg-primary p-8 shadow-[var(--shadow-xl)]">
+            <h3 className="font-head text-3xl font-black uppercase mb-4">
+              What you&apos;re matching
+            </h3>
+            <p className="font-sans text-base mb-6">
+              On the board you&apos;re not hunting “Epic” text — you&apos;re
+              hunting <strong>real NFT prize tiles</strong> that look exactly
+              like the on-chain mints above. Match both in 3 trials. Do it 3
+              times without choking. Mint.
+            </p>
+            <ul className="font-sans space-y-2 text-sm mb-6">
+              <li>★ {ROVA_PER_GAME} ROVA per game ({CELO_PER_GAME} CELO)</li>
+              <li>★ Demo mode — practice free, no mint</li>
+              <li>★ Leaderboard with your custom username</li>
+            </ul>
             <Link href="/play">
-              <RetroButton
-                size="lg"
-                className="font-head text-base tracking-wider shadow-[5px_5px_0_0_#000] transition-all hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[3px_3px_0_0_#000] active:translate-x-[5px] active:translate-y-[5px] active:shadow-none"
-              >
-                ★ SCRATCH NOW
+              <RetroButton size="lg" variant="secondary" className="w-full md:w-auto">
+                ENTER THE ARENA →
               </RetroButton>
             </Link>
           </div>
-
-          {/* stat counters */}
-          <div className="mt-10 grid grid-cols-3 gap-3">
-            <StatBlock label="Scratches" value={isLoading ? "…" : fmt(totalScratches)} />
-            <StatBlock label="Minted"    value={isLoading ? "…" : fmt(totalNfts)} />
-            <StatBlock label="Players"   value={isLoading ? "…" : fmt(totalPlayers)} />
-          </div>
-        </div>
-
-        {/* RIGHT — character cards with stars */}
-        <div className="relative flex items-end gap-4 md:gap-5">
-          {/* floating stars scattered around cards */}
-          <div className="absolute -left-8 top-4">
-            <FloatingStar size={32} delay="0s" />
-          </div>
-          <div className="absolute -right-6 top-12">
-            <FloatingStar size={24} delay="0.7s" />
-          </div>
-          <div className="absolute right-20 -top-8">
-            <FloatingStar size={20} delay="1.4s" fill="#000" />
-          </div>
-          <div className="absolute -left-4 bottom-8">
-            <FloatingStar size={18} delay="2.1s" fill="#000" />
-          </div>
-          <div className="absolute -right-2 bottom-20">
-            <FloatingStar size={26} delay="0.4s" />
-          </div>
-
-          <ScratchDemonCard />
-          <LuckyCoinCard />
-          <LegendCard />
         </div>
       </section>
 
-      {/* HOW TO PLAY SECTION */}
-      <section className="relative z-10 mx-auto max-w-7xl px-8 py-16">
-        <div className="border-4 border-black bg-white p-8 shadow-[8px_8px_0_0_#000]">
-          <h2 className="font-head text-4xl font-black uppercase tracking-tight text-black mb-6">
-            How to Play
-          </h2>
-          <div className="grid gap-8 md:grid-cols-3">
-            <div>
-              <div className="mb-4 inline-flex h-12 w-12 items-center justify-center border-2 border-black bg-[#ffdb33] font-head text-2xl font-black shadow-[4px_4px_0_0_#000]">
-                1
-              </div>
-              <h3 className="font-sans text-xl font-bold mb-2">Connect Wallet</h3>
-              <p className="font-sans text-sm font-medium text-black/60">
-                Connect your Web3 wallet to the Celo network to get started.
-              </p>
-            </div>
-            <div>
-              <div className="mb-4 inline-flex h-12 w-12 items-center justify-center border-2 border-black bg-[#c084fc] font-head text-2xl font-black shadow-[4px_4px_0_0_#000]">
-                2
-              </div>
-              <h3 className="font-sans text-xl font-bold mb-2">Scratch & Reveal</h3>
-              <p className="font-sans text-sm font-medium text-black/60">
-                Pay the entry fee and scratch your card to reveal the hidden rarity tier.
-              </p>
-            </div>
-            <div>
-              <div className="mb-4 inline-flex h-12 w-12 items-center justify-center border-2 border-black bg-black text-[#ffdb33] font-head text-2xl font-black shadow-[4px_4px_0_0_#ffdb33]">
-                3
-              </div>
-              <h3 className="font-sans text-xl font-bold mb-2">Win NFTs</h3>
-              <p className="font-sans text-sm font-medium text-black/60">
-                Collect Common, Rare, Epic, or Legendary NFTs directly to your wallet!
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
+      <MarqueeTicker />
 
-      {/* BOTTOM STRIP — yellow bar */}
-      <div className="relative z-10 border-t-2 border-black bg-[#ffdb33] px-10 py-3 flex items-center justify-between">
-        <span className="font-head text-[11px] font-black uppercase tracking-[0.2em] text-black">
-          on-chain · provably fair · celo mainnet
-        </span>
-        <div className="flex gap-3">
-          {["𝕏", "▶", "◆"].map((icon, i) => (
-            <span
-              key={i}
-              className="flex h-8 w-8 items-center justify-center border-2 border-black bg-white font-bold text-black shadow-[2px_2px_0_0_#000] cursor-pointer hover:bg-black hover:text-[#ffdb33] transition-colors text-sm"
-            >
-              {icon}
-            </span>
-          ))}
-        </div>
-      </div>
-
-      {/* SIMPLE FOOTER */}
-      <footer className="relative z-10 border-t-2 border-black bg-white px-8 py-12">
+      {/* FOOTER */}
+      <footer className="relative z-10 border-t-2 border-border bg-card px-4 py-10 md:px-8">
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-6 md:flex-row">
-          <div className="flex items-center gap-2">
-            <div className="h-8 w-8 border-2 border-black bg-[#ffdb33] shadow-[2px_2px_0_0_#000]"></div>
-            <span className="font-head text-2xl font-black uppercase tracking-tighter">
-              LootScratch
-            </span>
+          <div className="flex items-center gap-3">
+            <img
+              src="/logo.png"
+              alt="ROVA"
+              className="h-12 w-12 border-2 border-black bg-primary p-1"
+            />
+            <div>
+              <span className="font-head text-2xl font-black uppercase">ROVA</span>
+              <p className="font-sans text-[10px] text-muted-foreground">
+                Memory · Celo · NFT
+              </p>
+            </div>
           </div>
-          <p className="font-sans text-sm font-medium text-black/50 text-center md:text-left">
-            © {new Date().getFullYear()} LootScratch. Built on Celo.
-          </p>
+          <nav className="flex flex-wrap justify-center gap-6 font-head text-sm uppercase">
+            <Link href="/play" className="hover:bg-primary hover:px-2 transition-all">
+              Play
+            </Link>
+            <Link href="/leaderboard" className="hover:bg-primary hover:px-2 transition-all">
+              Leaderboard
+            </Link>
+            <Link href="/gallery" className="hover:bg-primary hover:px-2 transition-all">
+              Gallery
+            </Link>
+          </nav>
         </div>
       </footer>
-
-      <style>{`
-        @keyframes starFloat {
-          0%,100% { transform: translateY(0px) rotate(0deg); }
-          50%      { transform: translateY(-10px) rotate(12deg); }
-        }
-        @keyframes cardBob {
-          0%,100% { transform: rotate(var(--r, 0deg)) translateY(0px); }
-          50%      { transform: rotate(var(--r, 0deg)) translateY(-10px); }
-        }
-        .card-bob { animation: cardBob 4s ease-in-out infinite; }
-        .cb1 { --r: -4deg; animation-delay: 0s; }
-        .cb2 { --r:  3deg; animation-delay: 0.8s; }
-        .cb3 { --r: -2deg; animation-delay: 1.6s; }
-      `}</style>
     </main>
   );
 }

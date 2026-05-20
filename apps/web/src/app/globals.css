@@ -157,3 +157,44 @@
 .animate-glow-pulse {
   animation: glow-pulse 1.5s ease-in-out infinite;
 }
+
+@keyframes home-marquee {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+@keyframes home-wiggle {
+  0%,
+  100% {
+    transform: rotate(-2deg);
+  }
+  50% {
+    transform: rotate(2deg);
+  }
+}
+
+@keyframes home-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-12px);
+  }
+}
+
+.animate-home-marquee {
+  animation: home-marquee 28s linear infinite;
+}
+
+.animate-home-wiggle {
+  animation: home-wiggle 2.5s ease-in-out infinite;
+}
+
+.animate-home-float {
+  animation: home-float 4s ease-in-out infinite;
+}

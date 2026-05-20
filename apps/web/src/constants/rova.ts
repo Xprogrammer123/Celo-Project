@@ -9,3 +9,6 @@ export const ROVA_DEMO_START = 75;
 
 /** CELO sent when buying one ROVA pack. */
 export const CELO_BUY_PACK = "1";
+
+/** CELO cost for exactly one real game (25 ROVA at 100 ROVA / 1 CELO). */
+export const CELO_PER_GAME = "0.25";

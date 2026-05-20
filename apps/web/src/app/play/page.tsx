@@ -1,6 +1,7 @@
 import { ScratchGame } from "@/components/scratch-card/scratch-game";
 import { RovaWallet } from "@/components/game/rova-wallet";
 import { ROVA_PER_CELO, ROVA_PER_GAME } from "@/constants/rova";
+import { NFT_PRIZE_PREVIEW } from "@/lib/nft-preview-art";
 
 export default function PlayPage() {
   return (
@@ -57,7 +58,7 @@ export default function PlayPage() {
               <div className="space-y-2 font-sans text-xs">
                 {[
                   { label: "ROVA LOGO", count: 10, image: "/logo.png" },
-                  { label: "NFT PRIZE", count: 2, image: "/banner.png" },
+                  { label: "NFT PRIZE", count: 2, image: NFT_PRIZE_PREVIEW },
                 ].map((r) => (
                   <div
                     key={r.label}
@@ -91,7 +92,7 @@ export default function PlayPage() {
                 </li>
                 <li>
                   <strong className="text-foreground">1 game</strong> →{" "}
-                  {ROVA_PER_GAME} ROVA
+                  {ROVA_PER_GAME} ROVA (0.25 CELO)
                 </li>
                 <li>
                   <strong className="text-[#ffd700]">

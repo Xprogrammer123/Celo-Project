@@ -11,7 +11,6 @@ export function usePlayerStats() {
   const enabled = isContractConfigured;
   const player  = address ?? zeroAddress;
 
-  // batch all reads into one RPC call
   const { data, isLoading, refetch } = useReadContracts({
     contracts: [
       {
@@ -48,7 +47,7 @@ export function usePlayerStats() {
         functionName: "totalPlayers",
       },
     ],
-    query: { enabled: enabled && !!address },
+    query: { enabled },
   });
 
   const [balance, scratchDay, streak, totalScratches, totalNfts, totalPlayers] =

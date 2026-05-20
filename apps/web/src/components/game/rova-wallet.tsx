@@ -1,12 +1,13 @@
 "use client";
 
-import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { useAccount } from "wagmi";
 import {
   CELO_BUY_PACK,
+  CELO_PER_GAME,
   ROVA_PER_CELO,
   ROVA_PER_GAME,
 } from "@/constants/rova";
+import { gamesFromRova } from "@/lib/rova-math";
 import { useRovaBalance } from "@/hooks/useRovaBalance";
 import { useBuyRova } from "@/hooks/useBuyRova";
 import { RetroButton } from "@/components/retroui/button";
@@ -14,7 +15,17 @@ import { RetroButton } from "@/components/retroui/button";
 export function RovaWallet() {
   const { isConnected } = useAccount();
   const { balance, hydrated, canAffordGame, isGuest } = useRovaBalance();
-  const { buyPack, buyPackDemo, isBuying, error } = useBuyRova();
+  const {
+    buyPack,
+    buyOneGame,
+    buyMaxAffordable,
+    buyPackDemo,
+    isBuying,
+    error,
+    canBuyOneGame,
+    canBuyPack,
+    maxRovaFromWallet,
+  } = useBuyRova();
 
   const gamesLeft = Math.floor(balance / ROVA_PER_GAME);
 
@@ -24,12 +35,12 @@ export function RovaWallet() {
         ROVA CELO
       </h3>
       <p className="font-sans text-[10px] text-muted-foreground mb-3">
-        Play with ROVA credits — save real CELO.{" "}
+        <strong className="text-foreground">1 CELO = {ROVA_PER_CELO} ROVA</strong>
+        . One real game costs{" "}
         <strong className="text-foreground">
-          1 CELO = {ROVA_PER_CELO} ROVA
+          {ROVA_PER_GAME} ROVA ({CELO_PER_GAME} CELO)
         </strong>
-        , each game costs{" "}
-        <strong className="text-foreground">{ROVA_PER_GAME} ROVA</strong>.
+        .
       </p>
 
       <div className="flex items-end justify-between gap-3 border-2 border-black bg-muted px-3 py-3 mb-3">
@@ -48,9 +59,18 @@ export function RovaWallet() {
         </div>
       </div>
 
+      {!canAffordGame && hydrated && isConnected && (
+        <p className="font-sans text-xs text-muted-foreground mb-2">
+          Need {ROVA_PER_GAME} ROVA to play. With your CELO you can get up to{" "}
+          <strong>{maxRovaFromWallet} ROVA</strong> (
+          {gamesFromRova(maxRovaFromWallet)} game
+          {gamesFromRova(maxRovaFromWallet) !== 1 ? "s" : ""}).
+        </p>
+      )}
+
       {!canAffordGame && hydrated && (
         <p className="font-sans text-xs text-destructive mb-2">
-          Need {ROVA_PER_GAME} ROVA to play — buy a pack below.
+          Not enough ROVA — buy below to play for real.
         </p>
       )}
 
@@ -74,26 +94,44 @@ export function RovaWallet() {
           <RetroButton
             type="button"
             className="w-full text-sm"
-            disabled={isBuying}
-            onClick={() => void buyPack()}
+            disabled={isBuying || !canBuyOneGame}
+            onClick={() => void buyOneGame()}
           >
             {isBuying
               ? "CONFIRMING..."
-              : `BUY ${ROVA_PER_CELO} ROVA FOR ${CELO_BUY_PACK} CELO`}
+              : `BUY 1 GAME — ${CELO_PER_GAME} CELO (${ROVA_PER_GAME} ROVA)`}
           </RetroButton>
-          <ConnectButton showBalance={false} chainStatus="icon" />
+          <RetroButton
+            type="button"
+            variant="outline"
+            className="w-full text-xs"
+            disabled={isBuying || !canBuyPack}
+            onClick={() => void buyPack()}
+          >
+            BUY {ROVA_PER_CELO} ROVA FOR {CELO_BUY_PACK} CELO
+          </RetroButton>
+          <RetroButton
+            type="button"
+            variant="outline"
+            className="w-full text-xs"
+            disabled={isBuying || maxRovaFromWallet < ROVA_PER_GAME}
+            onClick={() => void buyMaxAffordable()}
+          >
+            CONVERT ALL CELO → ~{maxRovaFromWallet} ROVA
+          </RetroButton>
+          {!canBuyOneGame && (
+            <p className="font-sans text-[10px] text-destructive text-center">
+              Need at least {CELO_PER_GAME} CELO for one game.
+            </p>
+          )}
         </div>
       )}
 
       {error && (
         <p className="font-sans text-xs text-destructive mt-2">
-          Purchase failed. Try again.
+          {error.message ?? "Purchase failed. Try again."}
         </p>
       )}
-
-      <p className="font-sans text-[9px] text-muted-foreground mt-3">
-        {ROVA_PER_CELO / ROVA_PER_GAME} games per 1 CELO pack at current rates
-      </p>
     </div>
   );
 }

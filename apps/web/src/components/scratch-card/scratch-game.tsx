@@ -13,6 +13,7 @@ import {
   recordRoundWin,
   type LeaderboardMode,
 } from "@/lib/player-profile";
+import { NFT_PRIZE_PREVIEW } from "@/lib/nft-preview-art";
 import { usePlayerStats } from "@/hooks/usePlayerStats";
 import { useRovaBalance } from "@/hooks/useRovaBalance";
 import { RetroButton } from "@/components/retroui/button";
@@ -29,8 +30,9 @@ import {
 const GRID_COLS = 4;
 const TRIES = 3;
 const WINS_NEEDED = 3;
+
 const ROVA_LOGO_SRC = "/logo.png";
-const NFT_PRIZE_SRC = "/banner.png";
+const NFT_PRIZE_SRC = NFT_PRIZE_PREVIEW;
 
 type TileKind = "rova" | "nft";
 
