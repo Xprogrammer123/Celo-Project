@@ -29,6 +29,7 @@
     "wagmi": "^2.19.5"
   },
   "devDependencies": {
+    "@tailwindcss/oxide": "^4.2.4",
     "@tailwindcss/postcss": "^4.2.4",
     "@types/canvas-confetti": "^1.6.4",
     "@types/node": "^20.8.0",

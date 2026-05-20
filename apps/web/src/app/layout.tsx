@@ -37,7 +37,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${fontHead.variable} ${fontSans.variable} font-sans min-h-screen antialiased`}
+        className={`${fontHead.variable} ${fontSans.variable} min-h-screen antialiased`}
       >
         <WalletProvider>
           <RetroTooltipProvider>
