@@ -127,3 +127,35 @@
 .animate-flash-win {
   animation: flash-win 0.35s ease-in-out 3;
 }
+
+@keyframes tile-pop {
+  0% {
+    transform: scale(0.9);
+    opacity: 0.6;
+  }
+  60% {
+    transform: scale(1.06);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes glow-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 8px rgba(255, 215, 0, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 22px rgba(255, 215, 0, 0.7);
+  }
+}
+
+.animate-tile-pop {
+  animation: tile-pop 0.3s ease-out;
+}
+
+.animate-glow-pulse {
+  animation: glow-pulse 1.5s ease-in-out infinite;
+}

@@ -2,15 +2,14 @@
 
 import { useCallback, useState } from "react";
 import type { Address, Hex } from "viem";
-import { useAccount, useReadContract, useWriteContract, useChainId } from "wagmi";
+import { useChainId, useReadContract, useWriteContract } from "wagmi";
 import { lootScratchAbi } from "@/contracts";
 import { LOOT_SCRATCH_ADDRESS, isContractConfigured } from "@/constants/contract";
 import { configuredChain } from "@/constants/chains";
 
 export function useScratch() {
-  const { address } = useAccount();
   const chainId = useChainId();
-  const { data: hash, writeContractAsync, isPending, error } = useWriteContract();
+  const { writeContractAsync, isPending, error } = useWriteContract();
   const [sessionSpent, setSessionSpent] = useState(0n);
 
   const { data: mintFee } = useReadContract({
@@ -23,11 +22,12 @@ export function useScratch() {
   const fee = (mintFee as bigint | undefined) ?? 0n;
 
   const scratch = useCallback(
-    async (referrer: Address) => {
+    async (referrer: Address): Promise<Hex> => {
       if (!isContractConfigured)
-        throw new Error("Set NEXT_PUBLIC_LOOT_SCRATCH_ADDRESS first.");
+        throw new Error("Contract not configured.");
       if (chainId !== configuredChain.id)
         throw new Error(`Switch to ${configuredChain.name}.`);
+
       const h = await writeContractAsync({
         address: LOOT_SCRATCH_ADDRESS,
         abi: lootScratchAbi,
@@ -44,7 +44,6 @@ export function useScratch() {
   return {
     scratch,
     mintFee: fee,
-    hash: hash as Hex | undefined,
     isPending,
     error,
     sessionSpentWei: sessionSpent,

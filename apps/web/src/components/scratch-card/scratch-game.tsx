@@ -4,10 +4,8 @@ import confetti from "canvas-confetti";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   formatEther,
-  isAddress,
   parseEventLogs,
   zeroAddress,
-  type Address,
   type Hex,
 } from "viem";
 import {
@@ -22,14 +20,7 @@ import { rarityLabel } from "@/constants/rarity";
 import { isContractConfigured } from "@/constants/contract";
 import { usePlayerStats } from "@/hooks/usePlayerStats";
 import { useScratch } from "@/hooks/useScratch";
-import { RarityOddsPanel } from "@/components/game/rarity-panel";
 import { RetroButton } from "@/components/retroui/button";
-import {
-  RetroCard,
-  RetroCardContent,
-  RetroCardHeader,
-  RetroCardTitle,
-} from "@/components/retroui/card";
 import {
   RetroDialog,
   RetroDialogClose,
@@ -37,110 +28,211 @@ import {
   RetroDialogDescription,
   RetroDialogTitle,
 } from "@/components/retroui/dialog";
-import { RetroInput } from "@/components/retroui/input";
-import { RetroProgress } from "@/components/retroui/progress";
 
-const CELL = 9;
+/* ─── TYPES ──────────────────────────────────────────── */
 
-type Phase = "idle" | "confirm" | "revealing" | "done";
+const GRID = 12; // 4x3 board
+const TRIES = 3;
+const WINS_NEEDED = 3;
 
-export type ScratchOutcome = {
-  tokenId: bigint;
-  rarity: number;
+type Tile = { rarity: number; revealed: boolean; locked: boolean };
+
+type Phase =
+  | "idle"       // waiting for player to start
+  | "paying"     // wallet tx pending
+  | "waiting"    // on-chain confirmation
+  | "playing"    // board is live, player has flips
+  | "roundOver"  // all 3 flips used, showing result
+  | "nftWon";    // 3 wins hit, NFT minted / demo win
+
+/* ─── RARITY VISUALS ─────────────────────────────────── */
+
+const R = {
+  bg:     ["#bbb",   "#ffdb33", "#7e22ce", "#0a0a0a"],
+  fg:     ["#333",   "#000",    "#fff",    "#ffd700"],
+  border: ["#999",   "#000",    "#5b21b6", "#ffd700"],
+  icon:   ["\u00b7", "\u2726",  "\u25c6",  "\u2605"],
+  glow:   ["none",   "0 0 12px #ffdb33", "0 0 16px #a855f7", "0 0 20px #ffd700"],
 };
 
-/* ─── helpers ─────────────────────────────────────────── */
-
-function rarityBg(rarity: number | null) {
-  if (rarity === null) return "#2a2a2a";
-  if (rarity === 0) return "#d4d4d4";
-  if (rarity === 1) return "#ffdb33";
-  if (rarity === 2) return "#7e22ce";
-  return "#000000";
+/* ─── BOARD GENERATOR ────────────────────────────────── */
+// Distribution per board: 6 Common, 3 Rare, 2 Epic, 1 Legendary
+function buildBoard(): Tile[] {
+  const rarities = [
+    ...Array(6).fill(0),
+    ...Array(3).fill(1),
+    ...Array(2).fill(2),
+    ...Array(1).fill(3),
+  ];
+  for (let i = rarities.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [rarities[i], rarities[j]] = [rarities[j], rarities[i]];
+  }
+  return rarities.map((r) => ({ rarity: r, revealed: false, locked: false }));
 }
 
-function rarityText(rarity: number | null) {
-  if (rarity === null) return "#fff";
-  if (rarity === 2) return "#fff";
-  if (rarity === 3) return "#ffd700";
-  return "#000";
-}
+/* ─── TILE COMPONENT ─────────────────────────────────── */
 
-function ScratchCell({
-  revealed,
-  rarity,
-  onClick,
+function GameTile({
+  tile,
+  index,
+  canFlip,
+  onFlip,
 }: {
-  revealed: boolean;
-  rarity: number | null;
-  onClick: () => void;
+  tile: Tile;
+  index: number;
+  canFlip: boolean;
+  onFlip: (i: number) => void;
 }) {
+  const { rarity, revealed, locked } = tile;
+  const bg = R.bg[rarity];
+  const fg = R.fg[rarity];
+  const icon = R.icon[rarity];
+  const label = ["COM", "RARE", "EPIC", "LEG"][rarity];
+  const borderC = revealed ? R.border[rarity] : "#000";
+  const glow = revealed ? R.glow[rarity] : "none";
+
   return (
-    <div
-      className="relative cursor-pointer"
-      style={{ perspective: "600px", minHeight: 70, minWidth: 70 }}
-      onClick={onClick}
+    <button
+      type="button"
+      disabled={!canFlip || revealed}
+      onClick={() => onFlip(index)}
+      className="group relative focus:outline-none"
+      style={{ perspective: 800 }}
     >
       <div
+        className="tile-flip-inner"
         style={{
           position: "relative",
           width: "100%",
-          height: "100%",
-          minHeight: 70,
+          aspectRatio: "1",
           transformStyle: "preserve-3d",
-          transition: "transform 0.45s cubic-bezier(.4,0,.2,1)",
+          transition: "transform 0.5s cubic-bezier(.4,0,.2,1)",
           transform: revealed ? "rotateY(180deg)" : "rotateY(0deg)",
         }}
       >
-        {/* FRONT — scratchy dark tile */}
+        {/* FRONT — hidden */}
         <div
+          className="absolute inset-0 flex items-center justify-center select-none"
           style={{
-            position: "absolute",
-            inset: 0,
             backfaceVisibility: "hidden",
             WebkitBackfaceVisibility: "hidden",
-            background: "#2a2a2a",
-            border: "2px solid #000",
+            background: "#1a1a1a",
+            border: "3px solid #333",
+            cursor: canFlip ? "pointer" : "default",
             backgroundImage:
-              "repeating-linear-gradient(45deg,transparent,transparent 4px,rgba(255,255,255,.07) 4px,rgba(255,255,255,.07) 8px)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
+              "repeating-linear-gradient(45deg,transparent,transparent 5px,rgba(255,255,255,.04) 5px,rgba(255,255,255,.04) 10px)",
           }}
         >
-          <span style={{ fontSize: 20, opacity: 0.3 }}>?</span>
+          <span className="font-head text-3xl text-white/10 group-hover:text-white/25 transition-colors">
+            {canFlip ? "?" : ""}
+          </span>
         </div>
 
-        {/* BACK — rarity reveal */}
+        {/* BACK — revealed rarity */}
         <div
+          className="absolute inset-0 flex flex-col items-center justify-center gap-1 select-none"
           style={{
-            position: "absolute",
-            inset: 0,
             backfaceVisibility: "hidden",
             WebkitBackfaceVisibility: "hidden",
             transform: "rotateY(180deg)",
-            background: rarityBg(rarity),
-            border: rarity === 3 ? "2px solid #ffd700" : "2px solid #000",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: 2,
+            background: bg,
+            border: `3px solid ${borderC}`,
+            boxShadow: glow,
           }}
         >
-          <span style={{ fontSize: rarity === 3 ? 16 : 18, color: rarityText(rarity) }}>
-            {rarity === 3 ? "\u2605" : rarity === 2 ? "\u25c6" : rarity === 1 ? "\u2726" : "\u00b7"}
+          <span style={{ fontSize: rarity >= 2 ? 28 : 32, color: fg }}>
+            {icon}
           </span>
           <span
+            className="font-head tracking-widest"
+            style={{ fontSize: 11, color: fg }}
+          >
+            {label}
+          </span>
+          {locked && (
+            <span className="absolute top-1 right-1 text-xs">✓</span>
+          )}
+        </div>
+      </div>
+    </button>
+  );
+}
+
+/* ─── HUD COMPONENTS ─────────────────────────────────── */
+
+function FlipsLeft({ count }: { count: number }) {
+  return (
+    <div className="flex items-center gap-2">
+      <span className="font-head text-xs tracking-widest text-muted-foreground">
+        FLIPS
+      </span>
+      <div className="flex gap-1">
+        {Array.from({ length: TRIES }).map((_, i) => (
+          <div
+            key={i}
+            className="h-6 w-6 border-2 border-black flex items-center justify-center transition-all duration-200"
             style={{
-              fontFamily: "monospace",
-              fontSize: 9,
-              fontWeight: "bold",
-              color: rarityText(rarity),
-              letterSpacing: 1,
+              background: i < count ? "#ffdb33" : "#e5e5e5",
+              boxShadow: i < count ? "2px 2px 0 0 #000" : "none",
+              transform: i < count ? "scale(1)" : "scale(0.85)",
             }}
           >
-            {rarity !== null ? ["COM", "RARE", "EPIC", "LEG"][rarity] : ""}
+            <span className="font-head text-xs">
+              {i < count ? "\u2605" : ""}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function WinProgress({ wins }: { wins: number }) {
+  return (
+    <div className="flex items-center gap-2">
+      <span className="font-head text-xs tracking-widest text-muted-foreground">
+        WINS
+      </span>
+      <div className="flex gap-1">
+        {Array.from({ length: WINS_NEEDED }).map((_, i) => (
+          <div
+            key={i}
+            className="flex items-center justify-center border-2 border-black transition-all duration-300"
+            style={{
+              width: 32,
+              height: 32,
+              background: i < wins ? "#00c853" : "#1a1a1a",
+              boxShadow:
+                i < wins
+                  ? "3px 3px 0 0 #000, 0 0 12px rgba(0,200,83,0.4)"
+                  : "2px 2px 0 0 #000",
+              transform: i < wins ? "scale(1.05)" : "scale(1)",
+            }}
+          >
+            <span
+              className="font-head text-sm"
+              style={{ color: i < wins ? "#000" : "#333" }}
+            >
+              {i < wins ? "\u2713" : `${i + 1}`}
+            </span>
+          </div>
+        ))}
+        <div
+          className="flex items-center justify-center border-2 transition-all duration-300"
+          style={{
+            width: 32,
+            height: 32,
+            background: wins >= WINS_NEEDED ? "#ffd700" : "#2a2a2a",
+            borderColor: wins >= WINS_NEEDED ? "#ffd700" : "#555",
+            boxShadow:
+              wins >= WINS_NEEDED
+                ? "3px 3px 0 0 #000, 0 0 20px rgba(255,215,0,0.5)"
+                : "none",
+          }}
+        >
+          <span className="text-sm">
+            {wins >= WINS_NEEDED ? "\u2605" : "NFT"}
           </span>
         </div>
       </div>
@@ -148,97 +240,138 @@ function ScratchCell({
   );
 }
 
-function Flame() {
+function RoundBestDisplay({ best }: { best: number | null }) {
+  if (best === null) return null;
+  const bg = R.bg[best];
+  const fg = R.fg[best];
   return (
-    <span
-      className="inline-block h-4 w-3 bg-orange-500 shadow-[2px_2px_0_0_black]"
-      style={{
-        clipPath:
-          "polygon(50% 0%, 100% 65%, 75% 100%, 50% 85%, 25% 100%, 0% 65%)",
-      }}
-      title="Streak active"
-    />
+    <div
+      className="inline-flex items-center gap-2 border-2 border-black px-3 py-1"
+      style={{ background: bg, boxShadow: R.glow[best] }}
+    >
+      <span style={{ fontSize: 18, color: fg }}>{R.icon[best]}</span>
+      <span className="font-head text-sm" style={{ color: fg }}>
+        {rarityLabel(best)}
+      </span>
+    </div>
   );
 }
 
-/* ─── main component ──────────────────────────────────── */
+/* ─── MAIN GAME ──────────────────────────────────────── */
 
 export function ScratchGame() {
   const { address, isConnected } = useAccount();
   const chainId = useChainId();
   const wrongChain = isConnected && chainId !== configuredChain.id;
+  const isDemo = !isContractConfigured;
 
-  const { nftCount, scratchesToday, streak, isLoading: statsLoading, refetch: refetchStats } =
-    usePlayerStats();
+  const {
+    nftCount,
+    scratchesToday,
+    streak,
+    isLoading: statsLoading,
+    refetch: refetchStats,
+  } = usePlayerStats();
 
   const { scratch, mintFee, isPending, error, sessionSpentWei } = useScratch();
 
-  /* form state */
-  const [referrerIn, setReferrerIn] = useState("");
+  const [phase, setPhase] = useState<Phase>("idle");
+  const [board, setBoard] = useState<Tile[]>(buildBoard);
+  const [flipsLeft, setFlipsLeft] = useState(TRIES);
+  const [wins, setWins] = useState(0);
+  const [roundBest, setRoundBest] = useState<number | null>(null);
+  const [roundNum, setRoundNum] = useState(0);
 
-  /* tx tracking */
   const [hash, setHash] = useState<Hex | undefined>();
   const processedHash = useRef<Hex | undefined>(undefined);
 
-  /* game state */
-  const [phase, setPhase]               = useState<Phase>("idle");
-  const [resultRarity, setResultRarity] = useState<number | null>(null);
-  const [revealed, setRevealed]         = useState<boolean[]>(() =>
-    Array(CELL).fill(false)
-  );
+  const [dialogType, setDialogType] = useState<
+    "roundWin" | "roundLoss" | "nftWon" | null
+  >(null);
 
-  /* animation flags */
-  const [shake,     setShake]     = useState(false);
-  const [flashWin,  setFlashWin]  = useState(false);
-  const [winOpen,   setWinOpen]   = useState(false);
-  const [lossOpen,  setLossOpen]  = useState(false);
-
-  /* ── receipt watcher ─────────────────────────────────── */
   const receipt = useWaitForTransactionReceipt({
     hash,
     chainId: configuredChain.id,
     query: { enabled: !!hash },
   });
 
-  /* ── handle outcome ──────────────────────────────────── */
-  const onOutcome = useCallback(
-    (outcome: ScratchOutcome) => {
-      setResultRarity(outcome.rarity);
-      setPhase("done");
+  /* ── Start a new round (shuffle board, reset flips) ── */
+  const newRound = useCallback(() => {
+    setBoard(buildBoard());
+    setFlipsLeft(TRIES);
+    setRoundBest(null);
+    setPhase("playing");
+    setRoundNum((n) => n + 1);
+  }, []);
 
-      // reveal cells one by one
-      setRevealed(Array(CELL).fill(false));
-      let i = 0;
-      const id = window.setInterval(() => {
-        setRevealed((prev) => {
-          const next = [...prev];
-          if (i < CELL) next[i] = true;
-          return next;
-        });
-        i += 1;
-        if (i >= CELL) window.clearInterval(id);
-      }, 120);
+  /* ── Start fresh game (reset wins too) ── */
+  const newGame = useCallback(() => {
+    setWins(0);
+    setRoundNum(0);
+    setHash(undefined);
+    processedHash.current = undefined;
+    setDialogType(null);
+    newRound();
+  }, [newRound]);
 
-      // win / loss feedback
-      const isWin = outcome.rarity >= 1;
-      if (isWin) {
-        setFlashWin(true);
-        void confetti({ particleCount: 140, spread: 70, origin: { y: 0.6 } });
-        setTimeout(() => setFlashWin(false), 1100);
-        setTimeout(() => setWinOpen(true), 800);
-      } else {
-        setShake(true);
-        setTimeout(() => setShake(false), 400);
-        setTimeout(() => setLossOpen(true), 500);
+  /* ── Handle tile flip ── */
+  const handleFlip = useCallback(
+    (i: number) => {
+      if (phase !== "playing" || flipsLeft <= 0 || board[i].revealed) return;
+
+      const next = [...board];
+      next[i] = { ...next[i], revealed: true };
+      setBoard(next);
+
+      const rarity = next[i].rarity;
+      setRoundBest((prev) => (prev === null ? rarity : Math.max(prev, rarity)));
+
+      const remaining = flipsLeft - 1;
+      setFlipsLeft(remaining);
+
+      if (remaining === 0) {
+        const best =
+          rarity > (roundBest ?? -1) ? rarity : roundBest ?? rarity;
+        const isWin = best >= 2; // Epic or Legendary = win
+
+        setTimeout(() => {
+          // reveal entire board so player can see what they missed
+          setBoard((b) => b.map((t) => ({ ...t, revealed: true })));
+        }, 600);
+
+        setTimeout(() => {
+          if (isWin) {
+            const newWins = wins + 1;
+            setWins(newWins);
+            void confetti({
+              particleCount: 100,
+              spread: 60,
+              origin: { y: 0.5 },
+            });
+            if (newWins >= WINS_NEEDED) {
+              void confetti({
+                particleCount: 250,
+                spread: 100,
+                origin: { y: 0.4 },
+              });
+              setPhase("nftWon");
+              setDialogType("nftWon");
+              void refetchStats();
+            } else {
+              setPhase("roundOver");
+              setDialogType("roundWin");
+            }
+          } else {
+            setPhase("roundOver");
+            setDialogType("roundLoss");
+          }
+        }, 1400);
       }
-
-      // refresh on-chain stats
-      void refetchStats();
     },
-    [refetchStats]
+    [phase, flipsLeft, board, roundBest, wins, refetchStats]
   );
 
-  /* ── parse receipt once confirmed ────────────────────── */
+  /* ── On-chain receipt processing ── */
   useEffect(() => {
     if (
       !receipt.isSuccess ||
@@ -247,43 +380,10 @@ export function ScratchGame() {
       processedHash.current === hash
     )
       return;
-
     processedHash.current = hash;
-    setPhase("revealing");
+    newRound();
+  }, [receipt.isSuccess, receipt.data, hash, newRound]);
 
-    try {
-      // The Scratched event is emitted IN the same tx for the no-VRF contract
-      const logs = parseEventLogs({
-        abi: lootScratchAbi,
-        logs: receipt.data.logs,
-        eventName: "Scratched",
-      });
-
-      const mine = logs.find(
-        (l) => l.args.player?.toLowerCase() === address?.toLowerCase()
-      );
-
-      if (mine) {
-        // short dramatic pause then reveal
-        setTimeout(() => {
-          onOutcome({
-            tokenId: mine.args.tokenId as bigint,
-            rarity:  Number(mine.args.rarity),
-          });
-        }, 1200);
-        return;
-      }
-
-      // edge case: event not found (shouldn't happen with no-VRF)
-      console.error("Scratched event not found in receipt logs");
-      setPhase("idle");
-    } catch (err) {
-      console.error("Failed to parse receipt logs:", err);
-      setPhase("idle");
-    }
-  }, [receipt.isSuccess, receipt.data, hash, address, onOutcome]);
-
-  /* ── handle receipt error ────────────────────────────── */
   useEffect(() => {
     if (receipt.isError) {
       setPhase("idle");
@@ -291,312 +391,470 @@ export function ScratchGame() {
     }
   }, [receipt.isError]);
 
-  /* ── scratch action ──────────────────────────────────── */
-  const runScratch = async () => {
-    if (!isContractConfigured) return;
-
-    let ref: Address = zeroAddress;
-    const t = referrerIn.trim();
-    if (t) {
-      if (!isAddress(t)) {
-        alert("Invalid referrer address.");
-        return;
-      }
-      ref = t;
-    }
-
-    setPhase("confirm");
+  /* ── Pay and start (live mode) ── */
+  const startLive = useCallback(async () => {
+    setPhase("paying");
     try {
-      const h = await scratch(ref);
+      const h = await scratch(zeroAddress);
       setHash(h);
+      setPhase("waiting");
     } catch {
       setPhase("idle");
     }
-  };
+  }, [scratch]);
 
-  /* ── reveal helpers ──────────────────────────────────── */
-  const revealAllCells = () => setRevealed(Array(CELL).fill(true));
+  /* ── Demo start ── */
+  const startDemo = useCallback(() => {
+    newRound();
+  }, [newRound]);
 
-  const resetRound = () => {
-    setPhase("idle");
-    setHash(undefined);
-    processedHash.current = undefined;
-    setResultRarity(null);
-    setRevealed(Array(CELL).fill(false));
-    setWinOpen(false);
-    setLossOpen(false);
-  };
+  const isBusy = isPending || phase === "paying" || phase === "waiting";
 
-  /* ── misc ────────────────────────────────────────────── */
-  const scratchPct = useMemo(
-    () => Math.round((revealed.filter(Boolean).length / CELL) * 100),
-    [revealed]
-  );
-
-  const shareUrl = typeof window !== "undefined" ? window.location.origin : "";
-  const tweet =
-    resultRarity !== null
-      ? `Just scratched on ROVA — got ${rarityLabel(resultRarity)}. Try your luck: ${shareUrl}`
-      : "";
-
-  const isBusy =
-    isPending || phase === "confirm" || phase === "revealing";
-
-  const scratchLabel = () => {
-    if (phase === "confirm")   return "CONFIRMING…";
-    if (phase === "revealing") return "REVEALING…";
-    if (isPending)             return "CHECK WALLET…";
-    return "★ SCRATCH (PAY)";
-  };
-
-  /* ─── not connected / wrong chain ───────────────────── */
+  /* ─── NOT CONNECTED ────────────────────────────────── */
   if (!isConnected || wrongChain) {
     return (
-      <RetroCard className="shadow-[var(--shadow-xl)]">
-        <RetroCardHeader>
-          <RetroCardTitle className="text-center">
-            {wrongChain ? "WRONG NETWORK" : "CONNECT WALLET"}
-          </RetroCardTitle>
-        </RetroCardHeader>
-        <RetroCardContent className="space-y-4 text-center">
+      <div className="space-y-6">
+        {/* connect prompt */}
+        <div className="border-3 border-black bg-white p-6 shadow-[var(--shadow-xl)] text-center space-y-4">
+          <h2 className="font-head text-2xl font-black uppercase">
+            {wrongChain ? "WRONG NETWORK" : "CONNECT TO PLAY"}
+          </h2>
           <p className="font-sans text-sm text-muted-foreground">
             {wrongChain
-              ? "Switch to Celo Mainnet to play."
-              : "Connect your wallet to start scratching."}
+              ? `Switch to ${configuredChain.name}.`
+              : "Connect your wallet — or try the demo below."}
           </p>
           <div className="flex justify-center">
             <ConnectButton />
           </div>
-        </RetroCardContent>
-      </RetroCard>
+        </div>
+
+        {/* demo game */}
+        <GameBoard
+          board={board}
+          phase={phase}
+          flipsLeft={flipsLeft}
+          wins={wins}
+          roundBest={roundBest}
+          roundNum={roundNum}
+          isDemo
+          isBusy={false}
+          mintFee={0n}
+          sessionSpentWei={0n}
+          error={null}
+          onFlip={handleFlip}
+          onStart={startDemo}
+          onNewGame={newGame}
+          nftCount={0n}
+          scratchesToday={0n}
+          streak={0n}
+          statsLoading={false}
+        />
+
+        <ResultDialog
+          type={dialogType}
+          roundBest={roundBest}
+          wins={wins}
+          isDemo
+          onNextRound={() => {
+            setDialogType(null);
+            newRound();
+          }}
+          onNewGame={() => {
+            setDialogType(null);
+            newGame();
+          }}
+          onClose={() => setDialogType(null)}
+        />
+      </div>
     );
   }
 
-  /* ─── main UI ────────────────────────────────────────── */
+  /* ─── CONNECTED GAME ───────────────────────────────── */
   return (
     <div className="space-y-6">
-      {/* ── scratch card ── */}
-      <RetroCard
-        className={[
-          "border-[3px] border-black bg-primary shadow-[var(--shadow-xl)]",
-          shake    ? "animate-shake border-destructive" : "",
-          flashWin ? "animate-flash-win"               : "",
-        ].join(" ")}
-      >
-        <RetroCardHeader className="border-b-2 border-black bg-primary">
-          <p className="font-head text-center text-lg font-black uppercase tracking-widest">
-            SCRATCH CARD
-          </p>
-        </RetroCardHeader>
+      <GameBoard
+        board={board}
+        phase={phase}
+        flipsLeft={flipsLeft}
+        wins={wins}
+        roundBest={roundBest}
+        roundNum={roundNum}
+        isDemo={isDemo}
+        isBusy={isBusy}
+        mintFee={mintFee}
+        sessionSpentWei={sessionSpentWei}
+        error={error}
+        onFlip={handleFlip}
+        onStart={isDemo ? startDemo : () => void startLive()}
+        onNewGame={newGame}
+        nftCount={nftCount}
+        scratchesToday={scratchesToday}
+        streak={streak}
+        statsLoading={statsLoading}
+      />
 
-        <RetroCardContent className="space-y-4 p-4">
-          {/* 3×3 grid */}
-          <div className="grid grid-cols-3 gap-2 sm:gap-3">
-            {revealed.map((r, idx) => (
-              <ScratchCell
-                key={idx}
-                revealed={r}
-                rarity={r ? resultRarity : null}
-                onClick={() => {
-                  if (phase !== "done" || resultRarity === null) return;
-                  setRevealed((prev) => {
-                    const n = [...prev];
-                    n[idx] = true;
-                    return n;
-                  });
+      <ResultDialog
+        type={dialogType}
+        roundBest={roundBest}
+        wins={wins}
+        isDemo={isDemo}
+        onNextRound={() => {
+          setDialogType(null);
+          if (isDemo) {
+            newRound();
+          } else {
+            setPhase("idle");
+          }
+        }}
+        onNewGame={() => {
+          setDialogType(null);
+          newGame();
+        }}
+        onClose={() => setDialogType(null)}
+      />
+    </div>
+  );
+}
+
+/* ─── GAME BOARD COMPONENT ───────────────────────────── */
+
+function GameBoard({
+  board,
+  phase,
+  flipsLeft,
+  wins,
+  roundBest,
+  roundNum,
+  isDemo,
+  isBusy,
+  mintFee,
+  sessionSpentWei,
+  error,
+  onFlip,
+  onStart,
+  onNewGame,
+  nftCount,
+  scratchesToday,
+  streak,
+  statsLoading,
+}: {
+  board: Tile[];
+  phase: Phase;
+  flipsLeft: number;
+  wins: number;
+  roundBest: number | null;
+  roundNum: number;
+  isDemo: boolean;
+  isBusy: boolean;
+  mintFee: bigint;
+  sessionSpentWei: bigint;
+  error: Error | null;
+  onFlip: (i: number) => void;
+  onStart: () => void;
+  onNewGame: () => void;
+  nftCount: bigint;
+  scratchesToday: bigint;
+  streak: bigint;
+  statsLoading: boolean;
+}) {
+  const canFlip = phase === "playing" && flipsLeft > 0;
+
+  return (
+    <div
+      className="border-[3px] border-black shadow-[var(--shadow-xl)] overflow-hidden"
+      style={{ background: "#111" }}
+    >
+      {/* TOP HUD */}
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b-2 border-black bg-black px-4 py-3">
+        <div className="flex items-center gap-3">
+          <FlipsLeft count={flipsLeft} />
+          {roundBest !== null && phase === "playing" && (
+            <RoundBestDisplay best={roundBest} />
+          )}
+        </div>
+        <WinProgress wins={wins} />
+      </div>
+
+      {/* ROUND LABEL */}
+      <div className="flex items-center justify-between bg-[#1a1a1a] px-4 py-2 border-b border-[#333]">
+        <span className="font-head text-xs tracking-[0.3em] text-white/40">
+          {phase === "idle"
+            ? "READY TO PLAY"
+            : phase === "playing"
+              ? `ROUND ${roundNum} — PICK ${TRIES} TILES`
+              : phase === "paying"
+                ? "CHECK WALLET..."
+                : phase === "waiting"
+                  ? "CONFIRMING ON-CHAIN..."
+                  : phase === "nftWon"
+                    ? "NFT WON!"
+                    : "ROUND OVER"}
+        </span>
+        {isDemo && (
+          <span className="font-sans text-[9px] font-bold tracking-widest text-primary/60">
+            DEMO
+          </span>
+        )}
+      </div>
+
+      {/* THE GRID — 4 columns x 3 rows */}
+      <div className="grid grid-cols-4 gap-2 p-4 sm:gap-3 sm:p-5">
+        {board.map((tile, i) => (
+          <GameTile
+            key={`${roundNum}-${i}`}
+            tile={tile}
+            index={i}
+            canFlip={canFlip}
+            onFlip={onFlip}
+          />
+        ))}
+      </div>
+
+      {/* BOTTOM ACTIONS */}
+      <div className="space-y-3 border-t-2 border-black bg-white p-4">
+        {/* idle / roundOver → start button */}
+        {(phase === "idle" || phase === "roundOver") && (
+          <RetroButton
+            type="button"
+            className="w-full text-base shadow-[var(--shadow-md)]"
+            disabled={isBusy}
+            onClick={onStart}
+          >
+            {phase === "roundOver"
+              ? isDemo
+                ? "NEXT ROUND (DEMO)"
+                : "PAY & PLAY NEXT ROUND"
+              : isDemo
+                ? wins === 0
+                  ? "START GAME (DEMO)"
+                  : "CONTINUE (DEMO)"
+                : wins === 0
+                  ? `PAY ${mintFee > 0n ? formatEther(mintFee) + " CELO" : "..."} TO PLAY`
+                  : `PAY & PLAY ROUND ${roundNum + 1}`}
+          </RetroButton>
+        )}
+
+        {/* playing state guidance */}
+        {phase === "playing" && (
+          <p className="font-head text-center text-sm tracking-wider text-black animate-pulse">
+            TAP {flipsLeft} TILE{flipsLeft !== 1 ? "S" : ""} — FIND EPIC OR
+            LEGENDARY!
+          </p>
+        )}
+
+        {/* paying / waiting */}
+        {(phase === "paying" || phase === "waiting") && (
+          <p className="font-head text-center text-sm tracking-wider text-black animate-pulse">
+            {phase === "paying" ? "CHECK YOUR WALLET..." : "CONFIRMING ON-CHAIN..."}
+          </p>
+        )}
+
+        {/* nft won */}
+        {phase === "nftWon" && (
+          <div className="space-y-2 text-center">
+            <p className="font-head text-lg tracking-wider text-black">
+              YOU WON AN NFT!
+            </p>
+            <RetroButton type="button" className="w-full" onClick={onNewGame}>
+              PLAY AGAIN
+            </RetroButton>
+          </div>
+        )}
+
+        {/* cost / info */}
+        {!isDemo && mintFee > 0n && phase === "idle" && (
+          <p className="font-sans text-center text-xs text-muted-foreground">
+            {formatEther(mintFee)} CELO per round — {TRIES} flips — find Epic+ to win
+          </p>
+        )}
+
+        {isDemo && (
+          <p className="font-sans text-center text-[10px] text-muted-foreground">
+            Demo mode — deploy the contract to play for real NFTs
+          </p>
+        )}
+
+        {sessionSpentWei > 0n && (
+          <p className="font-sans text-center text-[10px] text-muted-foreground">
+            Session: {formatEther(sessionSpentWei)} CELO spent
+          </p>
+        )}
+
+        {error && (
+          <p className="font-sans text-center text-xs font-bold text-destructive">
+            Transaction failed. Try again.
+          </p>
+        )}
+      </div>
+
+      {/* PLAYER STATS BAR */}
+      {!isDemo && (
+        <div className="flex flex-wrap items-center justify-between gap-3 border-t-2 border-black bg-muted px-4 py-2 font-sans text-xs">
+          <span>
+            NFTs:{" "}
+            <strong>{statsLoading ? "..." : nftCount.toString()}</strong>
+          </span>
+          <span>
+            Today:{" "}
+            <strong>
+              {statsLoading
+                ? "..."
+                : `${scratchesToday.toString()} / 5`}
+            </strong>
+          </span>
+          <span className="flex items-center gap-1">
+            Streak:{" "}
+            <strong>{statsLoading ? "..." : streak.toString()}</strong>
+            {streak >= 2n && (
+              <span
+                className="inline-block h-3 w-2.5 bg-orange-500"
+                style={{
+                  clipPath:
+                    "polygon(50% 0%, 100% 65%, 75% 100%, 50% 85%, 25% 100%, 0% 65%)",
                 }}
               />
-            ))}
-          </div>
+            )}
+            {streak >= 3n && (
+              <span className="text-[9px] font-black text-[#00c853]">
+                2x LEG
+              </span>
+            )}
+          </span>
+        </div>
+      )}
+    </div>
+  );
+}
 
-          {/* progress */}
-          <RetroProgress value={scratchPct} />
-          <p className="font-sans text-center text-xs font-bold text-muted-foreground">
-            {revealed.filter(Boolean).length} / {CELL} scratched
-          </p>
+/* ─── RESULT DIALOG ──────────────────────────────────── */
 
-          {/* action row */}
-          <div className="flex flex-wrap gap-2">
-            <RetroButton
-              type="button"
-              variant="secondary"
-              className="flex-1"
-              disabled={
-                phase !== "done" ||
-                resultRarity === null ||
-                revealed.every(Boolean)
-              }
-              onClick={revealAllCells}
-            >
-              SCRATCH ALL
-            </RetroButton>
-            <RetroButton
-              type="button"
-              variant="outline"
-              className="flex-1"
-              disabled={isBusy}
-              onClick={resetRound}
-            >
-              RESET
-            </RetroButton>
-          </div>
+function ResultDialog({
+  type,
+  roundBest,
+  wins,
+  isDemo,
+  onNextRound,
+  onNewGame,
+  onClose,
+}: {
+  type: "roundWin" | "roundLoss" | "nftWon" | null;
+  roundBest: number | null;
+  wins: number;
+  isDemo: boolean;
+  onNextRound: () => void;
+  onNewGame: () => void;
+  onClose: () => void;
+}) {
+  if (!type) return null;
 
-          {/* referrer */}
-          <RetroInput
-            placeholder="Referrer wallet (optional — they get 5%)"
-            value={referrerIn}
-            onChange={(e) => setReferrerIn(e.target.value)}
-            disabled={isBusy}
-            className="font-mono text-xs"
-          />
-
-          {/* main CTA */}
-          <RetroButton
-            type="button"
-            className="w-full shadow-[var(--shadow-md)]"
-            disabled={!isContractConfigured || isBusy}
-            onClick={() => void runScratch()}
-          >
-            {scratchLabel()}
-          </RetroButton>
-
-          {/* cost */}
-          <p className="font-sans text-center text-sm text-muted-foreground">
-            Cost:{" "}
-            <strong>
-              {mintFee > 0n ? `${formatEther(mintFee)} CELO` : "…"}
-            </strong>{" "}
-            per scratch
-          </p>
-
-          {/* session spend */}
-          {sessionSpentWei > 0n && (
-            <p className="font-sans text-center text-[11px] text-muted-foreground">
-              Session total: {formatEther(sessionSpentWei)} CELO
-            </p>
-          )}
-
-          {/* errors */}
-          {error && (
-            <p className="font-sans text-center text-sm font-bold text-destructive">
-              Transaction failed. The blockchain said no. Try again.
-            </p>
-          )}
-          {!isContractConfigured && (
-            <p className="font-sans text-center text-sm font-bold">
-              Set NEXT_PUBLIC_LOOT_SCRATCH_ADDRESS in .env.local
-            </p>
-          )}
-        </RetroCardContent>
-      </RetroCard>
-
-      {/* ── win dialog ── */}
-      <RetroDialog open={winOpen} onOpenChange={setWinOpen}>
+  return (
+    <>
+      {/* ROUND WIN */}
+      <RetroDialog open={type === "roundWin"} onOpenChange={() => onClose()}>
         <RetroDialogContent>
           <RetroDialogTitle>
-            {resultRarity === 3
-              ? "YOU WON A LEGENDARY. SCREENSHOT THIS."
-              : "YOU WON. SCREENSHOT THIS."}
+            {roundBest === 3
+              ? "LEGENDARY FIND!"
+              : "EPIC! YOU FOUND IT!"}
           </RetroDialogTitle>
-          <RetroDialogDescription className="font-sans text-foreground">
-            Rarity:{" "}
-            <strong>
-              {resultRarity !== null ? rarityLabel(resultRarity) : ""}
-            </strong>
-            . Provably on-chain. Don&apos;t forget to flex.
-          </RetroDialogDescription>
-          <RetroButton
-            type="button"
-            className="mt-2 w-full"
-            onClick={() =>
-              window.open(
-                `https://twitter.com/intent/tweet?text=${encodeURIComponent(tweet)}`,
-                "_blank"
-              )
-            }
-          >
-            SHARE ON X
-          </RetroButton>
-          <RetroDialogClose type="button" className="w-full">
-            CLOSE
-          </RetroDialogClose>
-        </RetroDialogContent>
-      </RetroDialog>
-
-      {/* ── loss dialog ── */}
-      <RetroDialog open={lossOpen} onOpenChange={setLossOpen}>
-        <RetroDialogContent>
-          <RetroDialogTitle>NOT THIS TIME. ONE MORE?</RetroDialogTitle>
-          <RetroDialogDescription className="font-sans text-foreground">
-            Common doesn&apos;t mean ordinary — it means you paid tuition to the
-            chain. Hit scratch again.
+          <RetroDialogDescription className="font-sans text-foreground mt-3 space-y-2">
+            <p>
+              Best tile this round:{" "}
+              <strong>{roundBest !== null ? rarityLabel(roundBest) : ""}</strong>
+            </p>
+            <p>
+              Progress:{" "}
+              <strong>
+                {wins} / {WINS_NEEDED}
+              </strong>{" "}
+              wins
+              {wins >= WINS_NEEDED ? " — NFT UNLOCKED!" : ""}
+            </p>
+            <p className="text-sm text-muted-foreground">
+              {WINS_NEEDED - wins > 0
+                ? `${WINS_NEEDED - wins} more win${WINS_NEEDED - wins > 1 ? "s" : ""} to mint your NFT`
+                : "You did it!"}
+            </p>
           </RetroDialogDescription>
           <RetroDialogClose
             type="button"
-            className="w-full"
-            onClick={resetRound}
+            className="w-full mt-3"
+            onClick={onNextRound}
           >
-            AGAIN
+            NEXT ROUND
           </RetroDialogClose>
         </RetroDialogContent>
       </RetroDialog>
 
-      {/* ── run stats ── */}
-      <RetroCard>
-        <RetroCardHeader>
-          <RetroCardTitle className="text-base">RUN STATS</RetroCardTitle>
-        </RetroCardHeader>
-        <RetroCardContent className="font-sans space-y-2 text-sm">
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Your NFTs</span>
-            <span className="font-bold tabular-nums">
-              {statsLoading ? "…" : nftCount.toString()}
-            </span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Scratches today (UTC)</span>
-            <span className="flex items-center gap-1 font-bold tabular-nums">
-              {streak >= 2n && <Flame />}
-              {statsLoading ? "…" : scratchesToday.toString()} / 5
-            </span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Streak days</span>
-            <span className="font-bold tabular-nums">
-              {statsLoading ? "…" : streak.toString()}
-            </span>
-          </div>
-        </RetroCardContent>
-      </RetroCard>
+      {/* ROUND LOSS */}
+      <RetroDialog open={type === "roundLoss"} onOpenChange={() => onClose()}>
+        <RetroDialogContent>
+          <RetroDialogTitle>NO EPIC THIS TIME</RetroDialogTitle>
+          <RetroDialogDescription className="font-sans text-foreground mt-3 space-y-2">
+            <p>
+              Best tile:{" "}
+              <strong>{roundBest !== null ? rarityLabel(roundBest) : "COMMON"}</strong>
+            </p>
+            <p className="text-sm text-muted-foreground">
+              You need to find an Epic or Legendary in your 3 flips to score a
+              win. Come back daily to build streak — 3-day streak doubles
+              Legendary odds.
+            </p>
+          </RetroDialogDescription>
+          <RetroDialogClose
+            type="button"
+            className="w-full mt-3"
+            onClick={onNextRound}
+          >
+            TRY AGAIN
+          </RetroDialogClose>
+        </RetroDialogContent>
+      </RetroDialog>
 
-      {/* ── rarity odds ── */}
-      <RetroCard>
-        <RetroCardHeader>
-          <RetroCardTitle className="text-base">RARITY ODDS</RetroCardTitle>
-        </RetroCardHeader>
-        <RetroCardContent>
-          <RarityOddsPanel />
-        </RetroCardContent>
-      </RetroCard>
-
-      {/* ── share run ── */}
-      <RetroButton
-        type="button"
-        variant="outline"
-        className="w-full"
-        onClick={() =>
-          window.open(
-            `https://twitter.com/intent/tweet?text=${encodeURIComponent(
-              `Just scratched on ROVA — got ${
-                resultRarity !== null ? rarityLabel(resultRarity) : "???"
-              }. Try: ${shareUrl}`
-            )}`,
-            "_blank"
-          )
-        }
-      >
-        SHARE RUN
-      </RetroButton>
-    </div>
+      {/* NFT WON */}
+      <RetroDialog open={type === "nftWon"} onOpenChange={() => onClose()}>
+        <RetroDialogContent>
+          <RetroDialogTitle>
+            NFT UNLOCKED!
+          </RetroDialogTitle>
+          <RetroDialogDescription className="font-sans text-foreground mt-3 space-y-2">
+            <p>
+              You hit {WINS_NEEDED} wins!{" "}
+              {isDemo
+                ? "Deploy the contract to mint real NFTs."
+                : "Your NFT has been minted on-chain."}
+            </p>
+            <p className="text-sm text-muted-foreground">
+              Keep playing every day to stay eligible for the weekly prize pool.
+              Legendary NFT holders with active streaks get the biggest share.
+            </p>
+          </RetroDialogDescription>
+          {!isDemo && (
+            <RetroButton
+              type="button"
+              className="w-full mt-2"
+              onClick={() =>
+                window.open(
+                  `https://twitter.com/intent/tweet?text=${encodeURIComponent(
+                    `Just won an NFT on Loot Scratch! 3 Epic finds in a row. Try your luck: ${typeof window !== "undefined" ? window.location.origin : ""}`
+                  )}`,
+                  "_blank"
+                )
+              }
+            >
+              SHARE ON X
+            </RetroButton>
+          )}
+          <RetroDialogClose
+            type="button"
+            className="w-full mt-2"
+            onClick={onNewGame}
+          >
+            PLAY AGAIN
+          </RetroDialogClose>
+        </RetroDialogContent>
+      </RetroDialog>
+    </>
   );
 }
