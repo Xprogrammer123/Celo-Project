@@ -129,14 +129,14 @@ function GameTile({
           className="absolute inset-0 flex items-center justify-center select-none"
           style={{
             backfaceVisibility: "hidden",
-            background: "#1a1a1a",
-            border: "3px solid #333",
+            background: "#f5efd0",
+            border: "3px solid #000",
             cursor: canFlip ? "pointer" : "default",
             backgroundImage:
               "repeating-linear-gradient(45deg,transparent,transparent 5px,rgba(255,255,255,.04) 5px,rgba(255,255,255,.04) 10px)",
           }}
         >
-          <span className="font-head text-4xl text-white/10 group-hover:text-white/25 transition-colors">
+          <span className="font-head text-4xl text-black/15 group-hover:text-black/30 transition-colors">
             {canFlip ? "?" : ""}
           </span>
         </div>
@@ -184,7 +184,7 @@ function TrialsLeft({ remaining }: { remaining: number }) {
   const used = TRIES - remaining;
   return (
     <div className="flex items-center gap-2">
-      <span className="font-head text-xs tracking-widest text-white/40">
+      <span className="font-head text-xs tracking-widest text-muted-foreground">
         TRIALS
       </span>
       <div className="flex gap-1">
@@ -215,7 +215,7 @@ function StreakProgress({ wins }: { wins: number }) {
 
   return (
     <div className="flex items-center gap-2">
-      <span className="font-head text-xs tracking-widest text-white/40">
+      <span className="font-head text-xs tracking-widest text-muted-foreground">
         STREAK
       </span>
       <div className="flex gap-1 items-center">
@@ -226,7 +226,7 @@ function StreakProgress({ wins }: { wins: number }) {
             style={{
               width: 34,
               height: 34,
-              background: i < wins ? "#00c853" : "#1a1a1a",
+              background: i < wins ? "#00c853" : "#f3f3f3",
               boxShadow:
                 i < wins
                   ? "3px 3px 0 0 #000, 0 0 12px rgba(0,200,83,0.4)"
@@ -259,12 +259,15 @@ function EpicFoundBadge({ found }: { found: number }) {
     <div
       className="inline-flex items-center gap-2 border-2 px-3 py-1"
       style={{
-        background: found > 0 ? "#7e22ce" : "#222",
-        borderColor: found === 2 ? "#00c853" : "#5b21b6",
+        background: found > 0 ? "#7e22ce" : "#f3f3f3",
+        borderColor: found === 2 ? "#00c853" : "#999",
         boxShadow: found === 2 ? "0 0 16px rgba(0,200,83,0.5)" : "none",
       }}
     >
-      <span className="font-head text-xs text-white tracking-widest">
+      <span
+        className="font-head text-xs tracking-widest"
+        style={{ color: found > 0 ? "#fff" : "#000" }}
+      >
         EPIC {found}/2
       </span>
     </div>
@@ -501,12 +504,12 @@ export function ScratchGame() {
       />
 
       {!isConnected || wrongChain ? (
-        <div className="border-2 border-[#333] bg-[#111] p-4 text-center text-white space-y-3">
+        <div className="border-2 border-border bg-card p-4 text-center text-foreground space-y-3">
           <p className="font-head text-sm uppercase tracking-widest">
             {wrongChain ? "Wrong network" : "Connect for on-chain NFT mint"}
           </p>
           <ConnectButton />
-          <p className="font-sans text-xs text-white/40">
+          <p className="font-sans text-xs text-muted-foreground">
             Guest demo works without wallet — ROVA balance saved locally.
           </p>
         </div>
@@ -592,18 +595,15 @@ function GameBoard({
           : "ROUND COMPLETE";
 
   return (
-    <div
-      className="border-[3px] border-black shadow-[var(--shadow-xl)] overflow-hidden"
-      style={{ background: "#111" }}
-    >
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b-2 border-black bg-black px-4 py-3">
+    <div className="border-[3px] border-black shadow-[var(--shadow-xl)] overflow-hidden bg-card">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b-2 border-black bg-muted px-4 py-3">
         <TrialsLeft remaining={trialsLeft} />
         <EpicFoundBadge found={epicsFound} />
         <StreakProgress wins={winStreak} />
       </div>
 
-      <div className="flex items-center justify-between bg-[#1a1a1a] px-4 py-2 border-b border-[#333]">
-        <span className="font-head text-xs tracking-[0.25em] text-white/40">
+      <div className="flex items-center justify-between bg-background px-4 py-2 border-b border-border">
+        <span className="font-head text-xs tracking-[0.25em] text-muted-foreground">
           {statusText}
         </span>
         <span className="font-sans text-[9px] font-bold tracking-widest text-primary/70">

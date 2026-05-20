@@ -5,11 +5,11 @@ import { ROVA_PER_CELO, ROVA_PER_GAME } from "@/constants/rova";
 export default function PlayPage() {
   return (
     <div className="min-h-screen bg-background">
-      <div className="border-b-2 border-[#333] bg-black px-4 py-5 text-center">
+      <div className="border-b-2 border-border bg-card px-4 py-5 text-center">
         <h1 className="font-head text-3xl font-black uppercase tracking-[0.15em] text-primary md:text-4xl">
           ROVA MEMORY
         </h1>
-        <p className="font-sans mt-1 text-xs tracking-widest text-white/30">
+        <p className="font-sans mt-1 text-xs tracking-widest text-muted-foreground">
           FIND 2 EPIC CARDS IN 3 TRIALS &bull; WIN 3 IN A ROW &bull; MINT NFT
         </p>
       </div>
@@ -21,27 +21,27 @@ export default function PlayPage() {
           <aside className="space-y-4 lg:sticky lg:top-20">
             <RovaWallet />
 
-            <div className="border-2 border-[#333] bg-[#111] p-4 text-white">
+            <div className="border-2 border-border bg-card p-4 text-foreground">
               <h3 className="font-head text-sm font-black uppercase tracking-widest text-primary mb-3">
                 HOW IT CONNECTS
               </h3>
-              <div className="font-sans space-y-3 text-xs text-white/60">
+              <div className="font-sans space-y-3 text-xs text-muted-foreground">
                 <div className="border-l-2 border-primary pl-3">
-                  <strong className="text-white block mb-1">
+                  <strong className="text-foreground block mb-1">
                     1 — The board
                   </strong>
                   4×3 face-down cards. Two Epic cards are shuffled in among 10
                   decoys. Board reshuffles every new game.
                 </div>
                 <div className="border-l-2 border-[#7e22ce] pl-3">
-                  <strong className="text-white block mb-1">
+                  <strong className="text-foreground block mb-1">
                     2 — 3 trials
                   </strong>
                   Each trial is 2 picks. If the pair is different, both cards
                   close back face-down. Match both Epics within 3 trials to win.
                 </div>
                 <div className="border-l-2 border-[#00c853] pl-3">
-                  <strong className="text-white block mb-1">
+                  <strong className="text-foreground block mb-1">
                     3 — Win streak
                   </strong>
                   Win 3 rounds in a row with zero losses to mint an NFT. Lose
@@ -50,7 +50,7 @@ export default function PlayPage() {
               </div>
             </div>
 
-            <div className="border-2 border-[#333] bg-[#111] p-4 text-white">
+            <div className="border-2 border-border bg-card p-4 text-foreground">
               <h3 className="font-head text-sm font-black uppercase tracking-widest text-primary mb-3">
                 BOARD (4×3)
               </h3>
@@ -75,26 +75,26 @@ export default function PlayPage() {
                     >
                       {r.label}
                     </span>
-                    <span className="text-white/40">{r.count} cards</span>
+                    <span className="text-muted-foreground">{r.count} cards</span>
                   </div>
                 ))}
               </div>
-              <p className="mt-2 text-[10px] text-white/25">
+              <p className="mt-2 text-[10px] text-muted-foreground">
                 Pick 2 cards per trial. Mismatched cards close back for memory.
               </p>
             </div>
 
-            <div className="border-2 border-[#ffd700] bg-black p-4">
+            <div className="border-2 border-[#ffd700] bg-card p-4">
               <h3 className="font-head text-sm font-black uppercase tracking-widest text-[#ffd700] mb-3">
                 ROVA ECONOMY
               </h3>
-              <ul className="font-sans space-y-1.5 text-xs text-white/60">
+              <ul className="font-sans space-y-1.5 text-xs text-muted-foreground">
                 <li>
-                  <strong className="text-white">1 CELO</strong> →{" "}
+                  <strong className="text-foreground">1 CELO</strong> →{" "}
                   {ROVA_PER_CELO} ROVA
                 </li>
                 <li>
-                  <strong className="text-white">1 game</strong> →{" "}
+                  <strong className="text-foreground">1 game</strong> →{" "}
                   {ROVA_PER_GAME} ROVA
                 </li>
                 <li>

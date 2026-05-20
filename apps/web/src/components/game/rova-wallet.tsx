@@ -19,32 +19,32 @@ export function RovaWallet() {
   const gamesLeft = Math.floor(balance / ROVA_PER_GAME);
 
   return (
-    <div className="border-2 border-[#333] bg-[#111] p-4 text-white">
+    <div className="border-2 border-border bg-card p-4 text-foreground">
       <h3 className="font-head text-sm font-black uppercase tracking-widest text-primary mb-3">
         ROVA CELO
       </h3>
-      <p className="font-sans text-[10px] text-white/40 mb-3">
+      <p className="font-sans text-[10px] text-muted-foreground mb-3">
         Play with ROVA credits — save real CELO.{" "}
-        <strong className="text-white/70">
+        <strong className="text-foreground">
           1 CELO = {ROVA_PER_CELO} ROVA
         </strong>
         , each game costs{" "}
-        <strong className="text-white/70">{ROVA_PER_GAME} ROVA</strong>.
+        <strong className="text-foreground">{ROVA_PER_GAME} ROVA</strong>.
       </p>
 
-      <div className="flex items-end justify-between gap-3 border-2 border-black bg-black px-3 py-3 mb-3">
+      <div className="flex items-end justify-between gap-3 border-2 border-black bg-muted px-3 py-3 mb-3">
         <div>
-          <p className="font-sans text-[9px] tracking-widest text-white/30">
+          <p className="font-sans text-[9px] tracking-widest text-muted-foreground">
             BALANCE
           </p>
           <p className="font-head text-3xl text-primary tabular-nums">
             {hydrated ? balance : "—"}
-            <span className="text-sm text-white/40 ml-1">ROVA</span>
+            <span className="text-sm text-muted-foreground ml-1">ROVA</span>
           </p>
         </div>
         <div className="text-right">
-          <p className="font-sans text-[9px] text-white/30">GAMES LEFT</p>
-          <p className="font-head text-xl text-white">{gamesLeft}</p>
+          <p className="font-sans text-[9px] text-muted-foreground">GAMES LEFT</p>
+          <p className="font-head text-xl text-foreground">{gamesLeft}</p>
         </div>
       </div>
 
@@ -59,13 +59,13 @@ export function RovaWallet() {
           <RetroButton
             type="button"
             variant="outline"
-            className="w-full text-xs border-[#444] bg-[#1a1a1a] text-white hover:bg-[#222]"
+            className="w-full text-xs"
             disabled={isBuying}
             onClick={() => buyPackDemo()}
           >
             + {ROVA_PER_CELO} ROVA (DEMO TOP-UP)
           </RetroButton>
-          <p className="font-sans text-[10px] text-white/25 text-center">
+          <p className="font-sans text-[10px] text-muted-foreground text-center">
             Guest demo starts with {balance} ROVA
           </p>
         </div>
@@ -91,7 +91,7 @@ export function RovaWallet() {
         </p>
       )}
 
-      <p className="font-sans text-[9px] text-white/20 mt-3">
+      <p className="font-sans text-[9px] text-muted-foreground mt-3">
         {ROVA_PER_CELO / ROVA_PER_GAME} games per 1 CELO pack at current rates
       </p>
     </div>
