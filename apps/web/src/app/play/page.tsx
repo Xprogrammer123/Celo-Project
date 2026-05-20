@@ -10,7 +10,7 @@ export default function PlayPage() {
           ROVA MEMORY
         </h1>
         <p className="font-sans mt-1 text-xs tracking-widest text-muted-foreground">
-          FIND 2 EPIC CARDS IN 3 TRIALS &bull; WIN 3 IN A ROW &bull; MINT NFT
+          MATCH 2 NFT PRIZES IN 3 TRIALS &bull; WIN 3 IN A ROW &bull; MINT NFT
         </p>
       </div>
 
@@ -30,15 +30,15 @@ export default function PlayPage() {
                   <strong className="text-foreground block mb-1">
                     1 — The board
                   </strong>
-                  4×3 face-down cards. Two Epic cards are shuffled in among 10
-                  decoys. Board reshuffles every new game.
+                  4×3 face-down cards. Two NFT prize cards hide among 10 ROVA
+                  logo tiles. Board reshuffles every new game.
                 </div>
                 <div className="border-l-2 border-[#7e22ce] pl-3">
                   <strong className="text-foreground block mb-1">
                     2 — 3 trials
                   </strong>
                   Each trial is 2 picks. If the pair is different, both cards
-                  close back face-down. Match both Epics within 3 trials to win.
+                  close back face-down. Match both NFT prizes within 3 trials to win.
                 </div>
                 <div className="border-l-2 border-[#00c853] pl-3">
                   <strong className="text-foreground block mb-1">
@@ -56,23 +56,19 @@ export default function PlayPage() {
               </h3>
               <div className="space-y-2 font-sans text-xs">
                 {[
-                  { label: "COMMON (decoy)", count: 6, bg: "#bbb", fg: "#333" },
-                  { label: "RARE (decoy)", count: 4, bg: "#ffdb33", fg: "#000" },
-                  {
-                    label: "EPIC (target)",
-                    count: 2,
-                    bg: "#7e22ce",
-                    fg: "#fff",
-                  },
+                  { label: "ROVA LOGO", count: 10, image: "/logo.png" },
+                  { label: "NFT PRIZE", count: 2, image: "/banner.png" },
                 ].map((r) => (
                   <div
                     key={r.label}
-                    className="flex items-center justify-between"
+                    className="flex items-center justify-between gap-2"
                   >
-                    <span
-                      className="border-2 px-2 py-0.5 font-bold tracking-wider"
-                      style={{ background: r.bg, color: r.fg, borderColor: "#000" }}
-                    >
+                    <span className="flex items-center gap-2 border-2 border-black bg-white px-2 py-0.5 font-bold tracking-wider text-foreground">
+                      <img
+                        src={r.image}
+                        alt={r.label}
+                        className="h-5 w-5 object-contain"
+                      />
                       {r.label}
                     </span>
                     <span className="text-muted-foreground">{r.count} cards</span>
@@ -80,7 +76,7 @@ export default function PlayPage() {
                 ))}
               </div>
               <p className="mt-2 text-[10px] text-muted-foreground">
-                Pick 2 cards per trial. Mismatched cards close back for memory.
+                ROVA tiles are decoys. Find and match the 2 NFT prize cards.
               </p>
             </div>
 

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Archivo_Black, Space_Grotesk } from "next/font/google";
 import "./globals.css";
 
+import { RovaBalanceProvider } from "@/components/providers/rova-balance-provider";
 import { SiteHeader } from "@/components/site-header";
 import { WalletProvider } from "@/components/wallet-provider";
 import { WrongNetworkBanner } from "@/components/wrong-network-banner";
@@ -40,11 +41,13 @@ export default function RootLayout({
         className={`${fontHead.variable} ${fontSans.variable} min-h-screen antialiased`}
       >
         <WalletProvider>
-          <RetroTooltipProvider>
-            <WrongNetworkBanner />
-            <SiteHeader />
-            {children}
-          </RetroTooltipProvider>
+          <RovaBalanceProvider>
+            <RetroTooltipProvider>
+              <WrongNetworkBanner />
+              <SiteHeader />
+              {children}
+            </RetroTooltipProvider>
+          </RovaBalanceProvider>
         </WalletProvider>
       </body>
     </html>

@@ -23,10 +23,13 @@ import {
 const GRID_COLS = 4;
 const TRIES = 3;
 const WINS_NEEDED = 3;
-const EPIC_RARITY = 2;
+const ROVA_LOGO_SRC = "/logo.png";
+const NFT_PRIZE_SRC = "/banner.png";
+
+type TileKind = "rova" | "nft";
 
 type Tile = {
-  rarity: number;
+  kind: TileKind;
   revealed: boolean;
   matched: boolean;
 };
@@ -41,21 +44,6 @@ type DialogType =
   | "demoComplete"
   | null;
 
-/* ─── VISUALS ────────────────────────────────────────── */
-
-const R = {
-  bg: ["#bbb", "#ffdb33", "#7e22ce", "#0a0a0a"],
-  fg: ["#333", "#000", "#fff", "#ffd700"],
-  border: ["#999", "#000", "#5b21b6", "#ffd700"],
-  icon: ["\u00b7", "\u2726", "\u25c6", "\u2605"],
-  glow: [
-    "none",
-    "0 0 12px #ffdb33",
-    "0 0 16px #a855f7",
-    "0 0 20px #ffd700",
-  ],
-};
-
 function shuffle<T>(arr: T[]): T[] {
   const a = [...arr];
   for (let i = a.length - 1; i > 0; i--) {
@@ -65,22 +53,21 @@ function shuffle<T>(arr: T[]): T[] {
   return a;
 }
 
-/** 4×3 board: 10 decoys (6 common, 4 rare) + 2 epic cards shuffled. */
+/** 4×3 board: 10 ROVA logo tiles + 2 NFT prize tiles shuffled. */
 function buildBoard(): Tile[] {
-  const rarities = shuffle([
-    ...Array(6).fill(0),
-    ...Array(4).fill(1),
-    ...Array(2).fill(EPIC_RARITY),
+  const kinds = shuffle<TileKind>([
+    ...Array(10).fill("rova"),
+    ...Array(2).fill("nft"),
   ]);
-  return rarities.map((rarity) => ({
-    rarity,
+  return kinds.map((kind) => ({
+    kind,
     revealed: false,
     matched: false,
   }));
 }
 
-function countVisibleEpics(board: Tile[]) {
-  return board.filter((t) => t.revealed && t.rarity === EPIC_RARITY).length;
+function countVisibleNfts(board: Tile[]) {
+  return board.filter((t) => t.revealed && t.kind === "nft").length;
 }
 
 /* ─── TILE ───────────────────────────────────────────── */
@@ -96,16 +83,9 @@ function GameTile({
   canFlip: boolean;
   onFlip: (i: number) => void;
 }) {
-  const { rarity, revealed, matched } = tile;
-  const isEpic = rarity === EPIC_RARITY;
-  const bg = R.bg[rarity];
-  const fg = R.fg[rarity];
-  const label = isEpic ? "EPIC" : ["COM", "RARE"][rarity] ?? "???";
-  const borderC = matched
-    ? "#00c853"
-    : revealed
-      ? R.border[rarity]
-      : "#333";
+  const { kind, revealed, matched } = tile;
+  const isNft = kind === "nft";
+  const borderC = matched ? "#00c853" : isNft ? "#ffd700" : "#000";
 
   return (
     <button
@@ -142,32 +122,43 @@ function GameTile({
         </div>
 
         <div
-          className="absolute inset-0 flex flex-col items-center justify-center gap-1 select-none animate-tile-pop"
+          className="absolute inset-0 flex flex-col items-center justify-center gap-1 select-none animate-tile-pop overflow-hidden p-2"
           style={{
             backfaceVisibility: "hidden",
             transform: "rotateY(180deg)",
-            background: bg,
+            background: isNft ? "#0a0a0a" : "#fffef5",
             border: `3px solid ${borderC}`,
             boxShadow: matched
               ? "0 0 20px rgba(0,200,83,0.6)"
-              : revealed
-                ? R.glow[rarity]
+              : isNft
+                ? "0 0 20px rgba(255,215,0,0.45)"
                 : "none",
           }}
         >
-          <span style={{ fontSize: isEpic ? 32 : 28, color: fg }}>
-            {R.icon[rarity]}
-          </span>
-          <span
-            className="font-head tracking-widest"
-            style={{ fontSize: 11, color: fg }}
-          >
-            {label}
-          </span>
+          {isNft ? (
+            <>
+              <img
+                src={NFT_PRIZE_SRC}
+                alt="NFT prize"
+                className="h-[70%] w-full object-contain"
+              />
+              <span
+                className="font-head tracking-widest text-[#ffd700]"
+                style={{ fontSize: 10 }}
+              >
+                NFT PRIZE
+              </span>
+            </>
+          ) : (
+            <img
+              src={ROVA_LOGO_SRC}
+              alt="ROVA"
+              className="h-[72%] w-[72%] object-contain"
+            />
+          )}
           {matched && (
             <span
-              className="absolute top-1 right-1 font-head text-xs"
-              style={{ color: "#00c853" }}
+              className="absolute top-1 right-1 font-head text-xs bg-[#00c853] text-black px-1"
             >
               MATCH
             </span>
@@ -254,21 +245,21 @@ function StreakProgress({ wins }: { wins: number }) {
   );
 }
 
-function EpicFoundBadge({ found }: { found: number }) {
+function NftFoundBadge({ found }: { found: number }) {
   return (
     <div
       className="inline-flex items-center gap-2 border-2 px-3 py-1"
       style={{
-        background: found > 0 ? "#7e22ce" : "#f3f3f3",
-        borderColor: found === 2 ? "#00c853" : "#999",
+        background: found > 0 ? "#0a0a0a" : "#f3f3f3",
+        borderColor: found === 2 ? "#00c853" : "#ffd700",
         boxShadow: found === 2 ? "0 0 16px rgba(0,200,83,0.5)" : "none",
       }}
     >
       <span
         className="font-head text-xs tracking-widest"
-        style={{ color: found > 0 ? "#fff" : "#000" }}
+        style={{ color: found > 0 ? "#ffd700" : "#000" }}
       >
-        EPIC {found}/2
+        NFT {found}/2
       </span>
     </div>
   );
@@ -302,17 +293,17 @@ export function ScratchGame() {
   const [trialsLeft, setTrialsLeft] = useState(TRIES);
   const [winStreak, setWinStreak] = useState(0);
   const [roundNum, setRoundNum] = useState(0);
-  const [epicsFound, setEpicsFound] = useState(0);
+  const [nftsFound, setNftsFound] = useState(0);
   const [firstPick, setFirstPick] = useState<number | null>(null);
   const [resolving, setResolving] = useState(false);
-  const [demoMode, setDemoMode] = useState(true);
+  const [demoMode, setDemoMode] = useState(false);
   const [dialogType, setDialogType] = useState<DialogType>(null);
   const [payError, setPayError] = useState<string | null>(null);
 
   const newRound = useCallback(() => {
     setBoard(buildBoard());
     setTrialsLeft(TRIES);
-    setEpicsFound(0);
+    setNftsFound(0);
     setFirstPick(null);
     setResolving(false);
     setPhase("playing");
@@ -327,7 +318,7 @@ export function ScratchGame() {
     setPhase("idle");
     setBoard(buildBoard());
     setTrialsLeft(TRIES);
-    setEpicsFound(0);
+    setNftsFound(0);
     setFirstPick(null);
     setResolving(false);
     setPayError(null);
@@ -391,16 +382,16 @@ export function ScratchGame() {
       const next = [...board];
       next[i] = { ...next[i], revealed: true };
       setBoard(next);
-      setEpicsFound(countVisibleEpics(next));
+      setNftsFound(countVisibleNfts(next));
 
       if (firstPick === null) {
         setFirstPick(i);
-        if (next[i].rarity === EPIC_RARITY) {
+        if (next[i].kind === "nft") {
           void confetti({
             particleCount: 24,
             spread: 32,
             origin: { y: 0.6 },
-            colors: ["#a855f7"],
+            colors: ["#ffd700", "#ffdb33"],
           });
         }
         return;
@@ -412,16 +403,15 @@ export function ScratchGame() {
       setFirstPick(null);
       setResolving(true);
 
-      const isEpicPair =
-        next[previousPick].rarity === EPIC_RARITY &&
-        next[i].rarity === EPIC_RARITY;
+      const isNftPair =
+        next[previousPick].kind === "nft" && next[i].kind === "nft";
 
-      if (isEpicPair) {
+      if (isNftPair) {
         const matchedBoard = next.map((tile, idx) =>
           idx === previousPick || idx === i ? { ...tile, matched: true } : tile
         );
         setBoard(matchedBoard);
-        setEpicsFound(2);
+        setNftsFound(2);
         setTimeout(() => {
           setResolving(false);
           finishRound(true, matchedBoard);
@@ -437,7 +427,7 @@ export function ScratchGame() {
             : tile
         );
         setBoard(closedBoard);
-        setEpicsFound(0);
+        setNftsFound(0);
         setResolving(false);
 
         if (remainingTrials === 0) {
@@ -469,7 +459,7 @@ export function ScratchGame() {
     setBoard(buildBoard());
     setFirstPick(null);
     setResolving(false);
-    setEpicsFound(0);
+    setNftsFound(0);
     setPayError(null);
   }, []);
 
@@ -482,7 +472,7 @@ export function ScratchGame() {
         phase={phase}
         trialsLeft={trialsLeft}
         winStreak={winStreak}
-        epicsFound={epicsFound}
+        nftsFound={nftsFound}
         roundNum={roundNum}
         rovaBalance={rovaBalance}
         rovaHydrated={rovaHydrated}
@@ -541,7 +531,7 @@ function GameBoard({
   phase,
   trialsLeft,
   winStreak,
-  epicsFound,
+  nftsFound,
   roundNum,
   rovaBalance,
   rovaHydrated,
@@ -565,7 +555,7 @@ function GameBoard({
   phase: Phase;
   trialsLeft: number;
   winStreak: number;
-  epicsFound: number;
+  nftsFound: number;
   roundNum: number;
   rovaBalance: number;
   rovaHydrated: boolean;
@@ -587,7 +577,7 @@ function GameBoard({
 }) {
   const statusText =
     phase === "idle"
-      ? "READY — FIND BOTH EPIC CARDS"
+      ? "READY — MATCH BOTH NFT PRIZES"
       : phase === "playing"
         ? `ROUND ${roundNum} — ${trialsLeft} TRIAL${trialsLeft !== 1 ? "S" : ""} LEFT`
         : phase === "nftWon"
@@ -598,7 +588,7 @@ function GameBoard({
     <div className="border-[3px] border-black shadow-[var(--shadow-xl)] overflow-hidden bg-card">
       <div className="flex flex-wrap items-center justify-between gap-3 border-b-2 border-black bg-muted px-4 py-3">
         <TrialsLeft remaining={trialsLeft} />
-        <EpicFoundBadge found={epicsFound} />
+        <NftFoundBadge found={nftsFound} />
         <StreakProgress wins={winStreak} />
       </div>
 
@@ -704,7 +694,7 @@ function GameBoard({
         )}
 
         <p className="font-sans text-center text-[10px] text-muted-foreground">
-          4×3 board · 2 hidden Epic cards · 1 trial = 2 picks · lose once = streak wiped
+          4×3 board · 2 hidden NFT prizes · ROVA logo decoys · 1 trial = 2 picks
         </p>
       </div>
 
@@ -754,9 +744,9 @@ function ResultDialog({
     <>
       <RetroDialog open={type === "roundWin"} onOpenChange={() => onClose()}>
         <RetroDialogContent>
-          <RetroDialogTitle>BOTH EPICS FOUND!</RetroDialogTitle>
+          <RetroDialogTitle>BOTH NFT PRIZES MATCHED!</RetroDialogTitle>
           <RetroDialogDescription className="font-sans text-foreground mt-3 space-y-2">
-            <p>You matched both Epic cards within your trials.</p>
+            <p>You matched both NFT prize cards within your trials.</p>
             <p>
               Win streak:{" "}
               <strong>
@@ -784,7 +774,7 @@ function ResultDialog({
           <RetroDialogTitle>NO MATCH</RetroDialogTitle>
           <RetroDialogDescription className="font-sans text-foreground mt-3 space-y-2">
             <p>
-              You used all 3 trials without finding both Epic cards. Streak
+              You used all 3 trials without matching both NFT prizes. Streak
               stays at 0/3.
             </p>
           </RetroDialogDescription>

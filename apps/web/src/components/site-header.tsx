@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { cn } from "@/lib/utils";
+import { useRovaBalance } from "@/hooks/useRovaBalance";
 
 const links = [
   { href: "/", label: "HOME" },
@@ -14,6 +15,7 @@ const links = [
 
 export function SiteHeader() {
   const pathname = usePathname();
+  const { balance, hydrated } = useRovaBalance();
 
   return (
     <header className="sticky top-0 z-40 border-b-2 border-black bg-background/95 backdrop-blur-sm">
@@ -38,9 +40,21 @@ export function SiteHeader() {
               {l.label}
             </Link>
           ))}
+          <Link
+            href="/play"
+            className="border-2 border-black bg-primary px-3 py-1 font-head text-[11px] font-black uppercase tracking-wide shadow-[var(--shadow-sm)]"
+          >
+            {hydrated ? `${balance} ROVA` : "ROVA"}
+          </Link>
           <ConnectButton showBalance={false} chainStatus="icon" />
         </nav>
         <div className="flex items-center gap-2 md:hidden">
+          <Link
+            href="/play"
+            className="border-2 border-black bg-primary px-2 py-1 font-head text-[10px] font-black uppercase tracking-wide"
+          >
+            {hydrated ? `${balance} ROVA` : "ROVA"}
+          </Link>
           <ConnectButton showBalance={false} chainStatus="icon" />
         </div>
       </div>
