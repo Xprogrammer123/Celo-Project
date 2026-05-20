@@ -33,7 +33,13 @@ type Tile = {
 
 type Phase = "idle" | "playing" | "roundOver" | "nftWon";
 
-type DialogType = "roundWin" | "roundLoss" | "streakReset" | "nftWon" | null;
+type DialogType =
+  | "roundWin"
+  | "roundLoss"
+  | "streakReset"
+  | "nftWon"
+  | "demoComplete"
+  | null;
 
 /* ─── VISUALS ────────────────────────────────────────── */
 
@@ -296,6 +302,7 @@ export function ScratchGame() {
   const [epicsFound, setEpicsFound] = useState(0);
   const [firstPick, setFirstPick] = useState<number | null>(null);
   const [resolving, setResolving] = useState(false);
+  const [demoMode, setDemoMode] = useState(true);
   const [dialogType, setDialogType] = useState<DialogType>(null);
   const [payError, setPayError] = useState<string | null>(null);
 
@@ -341,6 +348,11 @@ export function ScratchGame() {
           });
 
           if (nextWins >= WINS_NEEDED) {
+            if (demoMode) {
+              setPhase("roundOver");
+              setDialogType("demoComplete");
+              return;
+            }
             void confetti({
               particleCount: 280,
               spread: 100,
@@ -360,7 +372,7 @@ export function ScratchGame() {
         }
       }, 1200);
     },
-    [winStreak, refetchStats]
+    [winStreak, refetchStats, demoMode]
   );
 
   const handleFlip = useCallback(
@@ -436,13 +448,27 @@ export function ScratchGame() {
   const startRound = useCallback(() => {
     if (!rovaHydrated) return;
 
-    if (!deduct(ROVA_PER_GAME)) {
+    if (!demoMode && !deduct(ROVA_PER_GAME)) {
       setPayError(`Need ${ROVA_PER_GAME} ROVA to play. Buy a pack in the sidebar.`);
       return;
     }
 
     newRound();
-  }, [rovaHydrated, deduct, newRound]);
+  }, [rovaHydrated, deduct, newRound, demoMode]);
+
+  const toggleMode = useCallback((nextDemoMode: boolean) => {
+    setDemoMode(nextDemoMode);
+    setDialogType(null);
+    setWinStreak(0);
+    setRoundNum(0);
+    setPhase("idle");
+    setTrialsLeft(TRIES);
+    setBoard(buildBoard());
+    setFirstPick(null);
+    setResolving(false);
+    setEpicsFound(0);
+    setPayError(null);
+  }, []);
 
   const canFlip = phase === "playing" && trialsLeft > 0 && !resolving;
 
@@ -461,8 +487,10 @@ export function ScratchGame() {
         canFlip={canFlip}
         firstPickActive={firstPick !== null}
         resolving={resolving}
+        demoMode={demoMode}
         payError={payError}
         isDemo={isDemo}
+        onToggleMode={toggleMode}
         onFlip={handleFlip}
         onStart={startRound}
         onNewGame={newGame}
@@ -487,7 +515,8 @@ export function ScratchGame() {
       <ResultDialog
         type={dialogType}
         winStreak={winStreak}
-        isDemo={isDemo}
+        isDemo={isDemo || demoMode}
+        demoMode={demoMode}
         onNextRound={() => {
           setDialogType(null);
           setPhase("idle");
@@ -517,8 +546,10 @@ function GameBoard({
   canFlip,
   firstPickActive,
   resolving,
+  demoMode,
   payError,
   isDemo,
+  onToggleMode,
   onFlip,
   onStart,
   onNewGame,
@@ -539,8 +570,10 @@ function GameBoard({
   canFlip: boolean;
   firstPickActive: boolean;
   resolving: boolean;
+  demoMode: boolean;
   payError: string | null;
   isDemo: boolean;
+  onToggleMode: (nextDemoMode: boolean) => void;
   onFlip: (i: number) => void;
   onStart: () => void;
   onNewGame: () => void;
@@ -574,8 +607,8 @@ function GameBoard({
           {statusText}
         </span>
         <span className="font-sans text-[9px] font-bold tracking-widest text-primary/70">
-          {rovaHydrated ? `${rovaBalance} ROVA` : "..."}
-          {isDemo ? " · DEMO" : ""}
+          {demoMode ? "FREE DEMO MODE" : rovaHydrated ? `${rovaBalance} ROVA` : "..."}
+          {isDemo ? " · DEMO CHAIN" : ""}
         </span>
       </div>
 
@@ -595,16 +628,39 @@ function GameBoard({
       </div>
 
       <div className="space-y-2 border-t-2 border-black bg-white p-4">
+        <div className="grid grid-cols-2 gap-2">
+          <RetroButton
+            type="button"
+            size="sm"
+            variant={demoMode ? "default" : "outline"}
+            onClick={() => onToggleMode(true)}
+          >
+            DEMO MODE
+          </RetroButton>
+          <RetroButton
+            type="button"
+            size="sm"
+            variant={!demoMode ? "default" : "outline"}
+            onClick={() => onToggleMode(false)}
+          >
+            PLAY WITH ROVA
+          </RetroButton>
+        </div>
+
         {(phase === "idle" || phase === "roundOver") && (
           <RetroButton
             type="button"
             className="w-full text-base shadow-[var(--shadow-md)]"
-            disabled={!rovaHydrated || !canAffordGame}
+            disabled={!rovaHydrated || (!demoMode && !canAffordGame)}
             onClick={onStart}
           >
-            {phase === "roundOver"
-              ? `PLAY AGAIN — ${ROVA_PER_GAME} ROVA`
-              : `START GAME — ${ROVA_PER_GAME} ROVA`}
+            {demoMode
+              ? phase === "roundOver"
+                ? "PLAY DEMO AGAIN"
+                : "START FREE DEMO"
+              : phase === "roundOver"
+                ? `PLAY AGAIN — ${ROVA_PER_GAME} ROVA`
+                : `START GAME — ${ROVA_PER_GAME} ROVA`}
           </RetroButton>
         )}
 
@@ -629,9 +685,15 @@ function GameBoard({
           </div>
         )}
 
-        {!canAffordGame && rovaHydrated && phase !== "playing" && (
+        {!demoMode && !canAffordGame && rovaHydrated && phase !== "playing" && (
           <p className="font-sans text-center text-xs text-destructive">
             Not enough ROVA — buy a pack ({ROVA_PER_GAME} ROVA per game).
+          </p>
+        )}
+
+        {demoMode && (
+          <p className="font-sans text-center text-xs text-muted-foreground">
+            Demo is free and fun, but demo wins do not mint NFTs.
           </p>
         )}
 
@@ -673,6 +735,7 @@ function ResultDialog({
   type,
   winStreak,
   isDemo,
+  demoMode,
   onNextRound,
   onNewGame,
   onClose,
@@ -680,6 +743,7 @@ function ResultDialog({
   type: DialogType;
   winStreak: number;
   isDemo: boolean;
+  demoMode: boolean;
   onNextRound: () => void;
   onNewGame: () => void;
   onClose: () => void;
@@ -765,7 +829,7 @@ function ResultDialog({
           <RetroDialogDescription className="font-sans text-foreground mt-3 space-y-2">
             <p>
               Three consecutive wins without a loss.{" "}
-              {isDemo
+              {isDemo || demoMode
                 ? "Deploy the contract to mint real NFTs on-chain."
                 : "Your NFT is on its way to your wallet."}
             </p>
@@ -776,6 +840,29 @@ function ResultDialog({
             onClick={onNewGame}
           >
             PLAY NEW RUN
+          </RetroDialogClose>
+        </RetroDialogContent>
+      </RetroDialog>
+
+      <RetroDialog
+        open={type === "demoComplete"}
+        onOpenChange={() => onClose()}
+      >
+        <RetroDialogContent>
+          <RetroDialogTitle>DEMO CLEARED!</RetroDialogTitle>
+          <RetroDialogDescription className="font-sans text-foreground mt-3 space-y-2">
+            <p>You completed a 3-win streak in demo mode.</p>
+            <p className="text-sm text-muted-foreground">
+              Demo does not mint NFTs. Switch to <strong>PLAY WITH ROVA</strong>{" "}
+              to play for real rewards.
+            </p>
+          </RetroDialogDescription>
+          <RetroDialogClose
+            type="button"
+            className="w-full mt-3"
+            onClick={onNextRound}
+          >
+            CONTINUE DEMO
           </RetroDialogClose>
         </RetroDialogContent>
       </RetroDialog>

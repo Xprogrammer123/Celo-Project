@@ -4,7 +4,7 @@ import { ROVA_PER_CELO, ROVA_PER_GAME } from "@/constants/rova";
 
 export default function PlayPage() {
   return (
-    <div className="min-h-screen bg-[#0a0a0a]">
+    <div className="min-h-screen bg-background">
       <div className="border-b-2 border-[#333] bg-black px-4 py-5 text-center">
         <h1 className="font-head text-3xl font-black uppercase tracking-[0.15em] text-primary md:text-4xl">
           ROVA MEMORY
