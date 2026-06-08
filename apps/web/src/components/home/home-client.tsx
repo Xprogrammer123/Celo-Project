@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import {
+  CELO_BUY_PACK,
   CELO_PER_GAME,
   ROVA_PER_CELO,
   ROVA_PER_GAME,
@@ -20,7 +21,7 @@ const TICKER = [
   "★ MATCH THE NFT ★",
   "3 TRIALS ONLY",
   "LOSE ONCE = STREAK GONE",
-  "0.25 CELO PER GAME",
+  `${CELO_PER_GAME} CELO PER GAME`,
   "DEMO IS FREE",
   "ON-CHAIN CELO",
   "3 WINS = MINT",

@@ -8,7 +8,7 @@ import { configuredChain } from "@/constants/chains";
 import { usePlayerUsername } from "@/hooks/usePlayerUsername";
 import { useRovaBalance } from "@/hooks/useRovaBalance";
 import { useBuyRova } from "@/hooks/useBuyRova";
-import { CELO_PER_GAME, ROVA_PER_GAME } from "@/constants/rova";
+import { ROVA_PACKS, ROVA_PER_GAME } from "@/constants/rova";
 import { displayName, formatPlayerId } from "@/lib/player-profile";
 import { RetroButton } from "@/components/retroui/button";
 import {
@@ -32,7 +32,7 @@ export function WalletProfileButton() {
   const { playerId, username, hydrated, isConnected, saveUsername } =
     usePlayerUsername();
   const { balance: rovaBalance, hydrated: rovaHydrated } = useRovaBalance();
-  const { buyOneGame, isBuying, canBuyOneGame } = useBuyRova();
+  const { buyRovaPack, isBuying, canAffordCelo } = useBuyRova();
   const { data: celoBalance, isLoading: celoLoading } = useBalance({
     address: isConnected ? (playerId as `0x${string}`) : undefined,
     chainId: configuredChain.id,
@@ -134,12 +134,12 @@ export function WalletProfileButton() {
               <RetroButton
                 type="button"
                 className="w-full"
-                disabled={isBuying || !canBuyOneGame}
-                onClick={() => void buyOneGame()}
+                disabled={isBuying || !canAffordCelo(ROVA_PACKS[0].celo)}
+                onClick={() => void buyRovaPack(ROVA_PACKS[0])}
               >
                 {isBuying
                   ? "CONFIRMING..."
-                  : `BUY 1 REAL GAME (${CELO_PER_GAME} CELO)`}
+                  : `BUY ${ROVA_PACKS[0].rova} ROVA (${ROVA_PACKS[0].celo} CELO)`}
               </RetroButton>
             )}
 

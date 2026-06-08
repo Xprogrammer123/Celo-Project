@@ -1,6 +1,6 @@
 import { ScratchGame } from "@/components/scratch-card/scratch-game";
 import { RovaWallet } from "@/components/game/rova-wallet";
-import { ROVA_PER_CELO, ROVA_PER_GAME } from "@/constants/rova";
+import { RovaPackShop } from "@/components/game/rova-pack-shop";
 import { NFT_PRIZE_PREVIEW } from "@/lib/nft-preview-art";
 
 export default function PlayPage() {
@@ -52,27 +52,7 @@ export default function PlayPage() {
             </div>
 
 
-            <div className="border-2 border-[#ffd700] bg-card p-4">
-              <h3 className="font-head text-sm font-black uppercase tracking-widest text-[#ffd700] mb-3">
-                ROVA ECONOMY
-              </h3>
-              <ul className="font-sans space-y-1.5 text-xs text-muted-foreground">
-                <li>
-                  <strong className="text-foreground">1 CELO</strong> →{" "}
-                  {ROVA_PER_CELO} ROVA
-                </li>
-                <li>
-                  <strong className="text-foreground">1 game</strong> →{" "}
-                  {ROVA_PER_GAME} ROVA (0.25 CELO)
-                </li>
-                <li>
-                  <strong className="text-[#ffd700]">
-                    {ROVA_PER_CELO / ROVA_PER_GAME} games
-                  </strong>{" "}
-                  per CELO pack
-                </li>
-              </ul>
-            </div>
+            <RovaPackShop />
           </aside>
         </div>
       </div>

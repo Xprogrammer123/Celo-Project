@@ -15,6 +15,7 @@ import {
   type LeaderboardMode,
 } from "@/lib/player-profile";
 import { NFT_PRIZE_PREVIEW } from "@/lib/nft-preview-art";
+import { friendlyWalletError } from "@/lib/wallet-errors";
 import { usePlayerStats } from "@/hooks/usePlayerStats";
 import { useRovaBalance } from "@/hooks/useRovaBalance";
 import { useScratch } from "@/hooks/useScratch";
@@ -316,9 +317,7 @@ export function ScratchGame() {
 
   const triggerMint = useCallback(async () => {
     if (!isContractConfigured) {
-      setMintError(
-        "Contract not deployed. Run pnpm contracts:deploy:celo-sepolia and set NEXT_PUBLIC_LOOT_SCRATCH_ADDRESS."
-      );
+      setMintError("Contract not set up yet — deploy and add the address to .env.local.");
       setDialogType("nftMintFailed");
       return;
     }
@@ -328,8 +327,9 @@ export function ScratchGame() {
       const hash = await scratch(zeroAddress);
       setMintHash(hash);
     } catch (e) {
-      const msg = e instanceof Error ? e.message : "Mint failed.";
-      setMintError(msg);
+      setMintError(
+        friendlyWalletError(e, "mint") ?? "Could not mint. Try again."
+      );
       setDialogType("nftMintFailed");
     }
   }, [scratch]);
@@ -353,7 +353,7 @@ export function ScratchGame() {
 
     if (mintReceipt.isError) {
       setMintHash(undefined);
-      setMintError("Transaction failed on-chain. Try again.");
+      setMintError("Mint did not go through on-chain. Try again.");
       setDialogType("nftMintFailed");
     }
   }, [
@@ -763,7 +763,7 @@ function GameBoard({
         )}
 
         {!demoMode && !canAffordGame && rovaHydrated && phase !== "playing" && (
-          <p className="font-sans text-center text-xs text-destructive">
+          <p className="font-sans text-center text-xs text-muted-foreground">
             Not enough ROVA — buy a pack ({ROVA_PER_GAME} ROVA per game).
           </p>
         )}
@@ -775,7 +775,7 @@ function GameBoard({
         )}
 
         {payError && (
-          <p className="font-sans text-center text-xs font-bold text-destructive">
+          <p className="font-sans text-center text-xs text-muted-foreground">
             {payError}
           </p>
         )}
@@ -935,8 +935,10 @@ function ResultDialog({
 
       <RetroDialog open={type === "nftMintFailed"} onOpenChange={() => onClose()}>
         <RetroDialogContent>
-          <RetroDialogTitle>MINT FAILED</RetroDialogTitle>
-          <RetroDialogDescription className="font-sans text-foreground mt-3 space-y-2">
+          <RetroDialogTitle>
+            {mintError?.includes("cancelled") ? "MINT CANCELLED" : "MINT DIDN'T GO THROUGH"}
+          </RetroDialogTitle>
+          <RetroDialogDescription className="font-sans text-muted-foreground mt-3 space-y-2">
             <p>{mintError ?? "Could not mint NFT. Try again."}</p>
           </RetroDialogDescription>
           <RetroButton

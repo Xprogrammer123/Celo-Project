@@ -1,11 +1,15 @@
 import { parseEther } from "viem";
-import { ROVA_PER_CELO, ROVA_PER_GAME } from "@/constants/rova";
+import {
+  CELO_BUY_PACK,
+  ROVA_PER_CELO,
+  ROVA_PER_GAME,
+} from "@/constants/rova";
 
-/** ROVA credits granted for a given CELO amount (proportional to 100 ROVA per 1 CELO). */
+/** ROVA credits granted for a given CELO amount (proportional to pack rate). */
 export function rovaCreditsForCelo(celoAmount: string): number {
   const wei = parseEther(celoAmount);
-  const rovaWei =
-    (wei * BigInt(ROVA_PER_CELO)) / parseEther("1");
+  const packWei = parseEther(CELO_BUY_PACK);
+  const rovaWei = (wei * BigInt(ROVA_PER_CELO)) / packWei;
   return Number(rovaWei);
 }
 
