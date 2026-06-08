@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useState } from "react";
-import type { Address, Hex } from "viem";
+import { zeroAddress, type Address, type Hex } from "viem";
 import { useChainId, useReadContract, useWriteContract } from "wagmi";
 import { lootScratchAbi } from "@/contracts";
 import { LOOT_SCRATCH_ADDRESS, isContractConfigured } from "@/constants/contract";
@@ -22,7 +22,7 @@ export function useScratch() {
   const fee = (mintFee as bigint | undefined) ?? 0n;
 
   const scratch = useCallback(
-    async (referrer: Address): Promise<Hex> => {
+    async (referrer: Address = zeroAddress): Promise<Hex> => {
       if (!isContractConfigured)
         throw new Error("Contract not configured.");
       if (chainId !== configuredChain.id)

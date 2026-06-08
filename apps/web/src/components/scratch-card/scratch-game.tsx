@@ -1,10 +1,11 @@
 "use client";
 
 import confetti from "canvas-confetti";
-import { useCallback, useState } from "react";
-import { useAccount, useChainId } from "wagmi";
+import { useCallback, useEffect, useState } from "react";
+import { formatEther, zeroAddress, type Hex } from "viem";
+import { useAccount, useChainId, useWaitForTransactionReceipt } from "wagmi";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
-import { configuredChain } from "@/constants/chains";
+import { configuredChain, explorerUrl, isTestnet } from "@/constants/chains";
 import { ROVA_PER_GAME } from "@/constants/rova";
 import { isContractConfigured } from "@/constants/contract";
 import {
@@ -16,6 +17,7 @@ import {
 import { NFT_PRIZE_PREVIEW } from "@/lib/nft-preview-art";
 import { usePlayerStats } from "@/hooks/usePlayerStats";
 import { useRovaBalance } from "@/hooks/useRovaBalance";
+import { useScratch } from "@/hooks/useScratch";
 import { RetroButton } from "@/components/retroui/button";
 import {
   RetroDialog,
@@ -48,7 +50,9 @@ type DialogType =
   | "roundWin"
   | "roundLoss"
   | "streakReset"
+  | "nftMinting"
   | "nftWon"
+  | "nftMintFailed"
   | "demoComplete"
   | null;
 
@@ -296,6 +300,71 @@ export function ScratchGame() {
     refetch: refetchStats,
   } = usePlayerStats();
 
+  const { scratch, mintFee, isPending: isMintSigning } = useScratch();
+  const [mintHash, setMintHash] = useState<Hex | undefined>();
+  const [mintError, setMintError] = useState<string | null>(null);
+  const [lastMintTxHash, setLastMintTxHash] = useState<Hex | undefined>();
+
+  const mintReceipt = useWaitForTransactionReceipt({
+    hash: mintHash,
+    chainId: configuredChain.id,
+    query: { enabled: !!mintHash },
+  });
+
+  const isMintConfirming =
+    !!mintHash && (mintReceipt.isLoading || mintReceipt.isFetching);
+
+  const triggerMint = useCallback(async () => {
+    if (!isContractConfigured) {
+      setMintError(
+        "Contract not deployed. Run pnpm contracts:deploy:celo-sepolia and set NEXT_PUBLIC_LOOT_SCRATCH_ADDRESS."
+      );
+      setDialogType("nftMintFailed");
+      return;
+    }
+    setMintError(null);
+    setDialogType("nftMinting");
+    try {
+      const hash = await scratch(zeroAddress);
+      setMintHash(hash);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Mint failed.";
+      setMintError(msg);
+      setDialogType("nftMintFailed");
+    }
+  }, [scratch]);
+
+  useEffect(() => {
+    if (!mintHash || mintReceipt.isLoading || mintReceipt.isFetching) return;
+
+    if (mintReceipt.isSuccess) {
+      setLastMintTxHash(mintHash);
+      setMintHash(undefined);
+      void refetchStats();
+      void confetti({
+        particleCount: 280,
+        spread: 100,
+        origin: { y: 0.4 },
+        colors: ["#7e22ce", "#ffdb33", "#00c853"],
+      });
+      setDialogType("nftWon");
+      return;
+    }
+
+    if (mintReceipt.isError) {
+      setMintHash(undefined);
+      setMintError("Transaction failed on-chain. Try again.");
+      setDialogType("nftMintFailed");
+    }
+  }, [
+    mintHash,
+    mintReceipt.isSuccess,
+    mintReceipt.isError,
+    mintReceipt.isLoading,
+    mintReceipt.isFetching,
+    refetchStats,
+  ]);
+
   const [phase, setPhase] = useState<Phase>("idle");
   const [board, setBoard] = useState<Tile[]>(buildBoard);
   const [trialsLeft, setTrialsLeft] = useState(TRIES);
@@ -330,6 +399,9 @@ export function ScratchGame() {
     setFirstPick(null);
     setResolving(false);
     setPayError(null);
+    setMintHash(undefined);
+    setMintError(null);
+    setLastMintTxHash(undefined);
   }, []);
 
   const finishRound = useCallback(
@@ -360,14 +432,8 @@ export function ScratchGame() {
               setDialogType("demoComplete");
               return;
             }
-            void confetti({
-              particleCount: 280,
-              spread: 100,
-              origin: { y: 0.4 },
-            });
             setPhase("nftWon");
-            setDialogType("nftWon");
-            void refetchStats();
+            void triggerMint();
           } else {
             setPhase("roundOver");
             setDialogType("roundWin");
@@ -379,7 +445,7 @@ export function ScratchGame() {
         }
       }, 1200);
     },
-    [winStreak, refetchStats, demoMode, address]
+    [winStreak, demoMode, address, triggerMint]
   );
 
   const handleFlip = useCallback(
@@ -521,8 +587,16 @@ export function ScratchGame() {
       <ResultDialog
         type={dialogType}
         winStreak={winStreak}
-        isDemo={isDemo || demoMode}
         demoMode={demoMode}
+        mintError={mintError}
+        mintFeeLabel={
+          mintFee > 0n ? `${formatEther(mintFee)} CELO` : "0.001 CELO"
+        }
+        isMintPending={isMintSigning || isMintConfirming}
+        lastMintTxHash={lastMintTxHash}
+        explorerUrl={explorerUrl}
+        isTestnet={isTestnet}
+        onRetryMint={() => void triggerMint()}
         onNextRound={() => {
           setDialogType(null);
           setPhase("idle");
@@ -737,21 +811,37 @@ function GameBoard({
 function ResultDialog({
   type,
   winStreak,
-  isDemo,
   demoMode,
+  mintError,
+  mintFeeLabel,
+  isMintPending,
+  lastMintTxHash,
+  explorerUrl,
+  isTestnet,
+  onRetryMint,
   onNextRound,
   onNewGame,
   onClose,
 }: {
   type: DialogType;
   winStreak: number;
-  isDemo: boolean;
   demoMode: boolean;
+  mintError: string | null;
+  mintFeeLabel: string;
+  isMintPending: boolean;
+  lastMintTxHash?: Hex;
+  explorerUrl: string;
+  isTestnet: boolean;
+  onRetryMint: () => void;
   onNextRound: () => void;
   onNewGame: () => void;
   onClose: () => void;
 }) {
   if (!type) return null;
+
+  const txUrl = lastMintTxHash
+    ? `${explorerUrl}/tx/${lastMintTxHash}`
+    : null;
 
   return (
     <>
@@ -826,16 +916,67 @@ function ResultDialog({
         </RetroDialogContent>
       </RetroDialog>
 
+      <RetroDialog open={type === "nftMinting"} onOpenChange={() => onClose()}>
+        <RetroDialogContent>
+          <RetroDialogTitle>MINTING NFT…</RetroDialogTitle>
+          <RetroDialogDescription className="font-sans text-foreground mt-3 space-y-2">
+            <p>
+              3 wins locked in. Confirm the mint in your wallet (
+              {mintFeeLabel}).
+            </p>
+            {isMintPending && (
+              <p className="text-sm text-muted-foreground">
+                Waiting for wallet / block confirmation…
+              </p>
+            )}
+          </RetroDialogDescription>
+        </RetroDialogContent>
+      </RetroDialog>
+
+      <RetroDialog open={type === "nftMintFailed"} onOpenChange={() => onClose()}>
+        <RetroDialogContent>
+          <RetroDialogTitle>MINT FAILED</RetroDialogTitle>
+          <RetroDialogDescription className="font-sans text-foreground mt-3 space-y-2">
+            <p>{mintError ?? "Could not mint NFT. Try again."}</p>
+          </RetroDialogDescription>
+          <RetroButton
+            type="button"
+            className="w-full mt-3"
+            onClick={onRetryMint}
+          >
+            RETRY MINT
+          </RetroButton>
+          <RetroButton
+            type="button"
+            variant="outline"
+            className="w-full mt-2"
+            onClick={onNewGame}
+          >
+            START OVER
+          </RetroButton>
+        </RetroDialogContent>
+      </RetroDialog>
+
       <RetroDialog open={type === "nftWon"} onOpenChange={() => onClose()}>
         <RetroDialogContent>
           <RetroDialogTitle>3/3 — NFT MINTED</RetroDialogTitle>
           <RetroDialogDescription className="font-sans text-foreground mt-3 space-y-2">
             <p>
-              Three consecutive wins without a loss.{" "}
-              {isDemo || demoMode
-                ? "Deploy the contract to mint real NFTs on-chain."
-                : "Your NFT is on its way to your wallet."}
+              Three consecutive wins.{" "}
+              {isTestnet
+                ? "Testnet LOOT NFT is in your wallet on Celo Sepolia."
+                : "LOOT NFT minted to your wallet on Celo."}
             </p>
+            {txUrl && (
+              <a
+                href={txUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm text-primary underline block"
+              >
+                View on explorer →
+              </a>
+            )}
           </RetroDialogDescription>
           <RetroDialogClose
             type="button"

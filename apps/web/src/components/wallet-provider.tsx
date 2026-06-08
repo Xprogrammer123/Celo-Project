@@ -4,7 +4,7 @@ import { RainbowKitProvider, getDefaultConfig } from "@rainbow-me/rainbowkit";
 import "@rainbow-me/rainbowkit/styles.css";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { WagmiProvider, createConfig, http } from "wagmi";
-import { configuredChain } from "@/constants/chains";
+import { celoRpcUrl, configuredChain } from "@/constants/chains";
 
 import { useMemo } from "react";
 
@@ -17,7 +17,7 @@ const projectId =
 const serverConfig = createConfig({
   chains: [configuredChain],
   transports: {
-    [configuredChain.id]: http(process.env.CELO_RPC_URL || undefined),
+    [configuredChain.id]: http(celoRpcUrl),
   },
   ssr: true,
 });
@@ -34,9 +34,7 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
       projectId,
       chains: [configuredChain],
       transports: {
-        [configuredChain.id]: http(
-          process.env.CELO_RPC_URL || undefined
-        ),
+        [configuredChain.id]: http(celoRpcUrl),
       },
       ssr: false,
     });

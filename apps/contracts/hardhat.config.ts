@@ -17,6 +17,11 @@ const config: HardhatUserConfig = {
       accounts: process.env.PRIVATE_KEY ? [`0x${process.env.PRIVATE_KEY}`] : [],
       chainId: 11142220,
     },
+    "celo-sepolia": {
+      url: process.env.CELO_ALFAJORES_RPC_URL || "https://forno.celo-sepolia.celo-testnet.org/",
+      accounts: process.env.PRIVATE_KEY ? [`0x${process.env.PRIVATE_KEY}`] : [],
+      chainId: 11142220,
+    },
     celo: {
       url:
         process.env.CELO_MAINNET_RPC_URL || "https://forno.celo.org",

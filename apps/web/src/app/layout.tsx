@@ -5,6 +5,7 @@ import "./globals.css";
 import { RovaBalanceProvider } from "@/components/providers/rova-balance-provider";
 import { SiteHeader } from "@/components/site-header";
 import { WalletProvider } from "@/components/wallet-provider";
+import { TestnetBanner } from "@/components/testnet-banner";
 import { WrongNetworkBanner } from "@/components/wrong-network-banner";
 import { RetroTooltipProvider } from "@/components/retroui/tooltip";
 
@@ -43,6 +44,7 @@ export default function RootLayout({
         <WalletProvider>
           <RovaBalanceProvider>
             <RetroTooltipProvider>
+              <TestnetBanner />
               <WrongNetworkBanner />
               <SiteHeader />
               {children}
