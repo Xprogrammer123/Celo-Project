@@ -51,35 +51,6 @@ export default function PlayPage() {
               </div>
             </div>
 
-            <div className="border-2 border-border bg-card p-4 text-foreground">
-              <h3 className="font-head text-sm font-black uppercase tracking-widest text-primary mb-3">
-                BOARD (4×3)
-              </h3>
-              <div className="space-y-2 font-sans text-xs">
-                {[
-                  { label: "ROVA LOGO", count: 10, image: "/logo.png" },
-                  { label: "NFT PRIZE", count: 2, image: NFT_PRIZE_PREVIEW },
-                ].map((r) => (
-                  <div
-                    key={r.label}
-                    className="flex items-center justify-between gap-2"
-                  >
-                    <span className="flex items-center gap-2 border-2 border-black bg-white px-2 py-0.5 font-bold tracking-wider text-foreground">
-                      <img
-                        src={r.image}
-                        alt={r.label}
-                        className="h-5 w-5 object-contain"
-                      />
-                      {r.label}
-                    </span>
-                    <span className="text-muted-foreground">{r.count} cards</span>
-                  </div>
-                ))}
-              </div>
-              <p className="mt-2 text-[10px] text-muted-foreground">
-                ROVA tiles are decoys. Find and match the 2 NFT prize cards.
-              </p>
-            </div>
 
             <div className="border-2 border-[#ffd700] bg-card p-4">
               <h3 className="font-head text-sm font-black uppercase tracking-widest text-[#ffd700] mb-3">
