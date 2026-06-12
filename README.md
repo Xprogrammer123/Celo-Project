@@ -1,59 +1,118 @@
-# my-celo-app
+# ROVA Memory
 
-A new Celo blockchain project
+Memory game on Celo — match hidden NFT tiles, win 3 rounds in a row, mint a **Loot Scratch** NFT on-chain.
 
-A modern Celo blockchain application built with Next.js, TypeScript, and Turborepo.
+Built with Next.js, Wagmi, RainbowKit, and Hardhat (Turborepo monorepo).
 
-## Getting Started
+## How it works
 
-1. Install dependencies:
-   ```bash
-   pnpm install
-   ```
+1. **Play** — 4×3 board, 2 hidden NFT prize cards, **3 trials** per round (2 picks each).
+2. **Pay with ROVA** — in-game credits bought with CELO (or free demo mode).
+3. **Win streak** — win **3 rounds in a row** without a loss → wallet prompts an on-chain mint (~0.001 CELO fee).
+4. **NFT** — ERC-721 `LOOT` token with on-chain SVG art (Common → Legendary).
 
-2. Start the development server:
-   ```bash
-   pnpm dev
-   ```
+### ROVA economy
 
-3. Open [http://localhost:3000](http://localhost:3000) in your browser.
+| | |
+|---|---|
+| **100 ROVA pack** | 0.3 CELO |
+| **50 ROVA pack** | 0.15 CELO |
+| **20 ROVA pack** | 0.06 CELO |
+| **1 game** | 2 ROVA |
+| **Games per 100 ROVA** | 50 |
 
-## Project Structure
+Pack prices live in `apps/web/src/constants/rova.ts`.
 
-This is a monorepo managed by Turborepo with the following structure:
+## Quick start (Celo Sepolia — faucet testing)
 
-- `apps/web` - Next.js application with embedded UI components and utilities
-- `apps/hardhat` - Smart contract development environment
+### 1. Install
 
-## Available Scripts
+```bash
+pnpm install
+```
 
-- `pnpm dev` - Start development servers
-- `pnpm build` - Build all packages and apps
-- `pnpm lint` - Lint all packages and apps
-- `pnpm type-check` - Run TypeScript type checking
+### 2. Environment
 
-### Smart Contract Scripts
+```bash
+cp apps/web/.env.sepolia.example apps/web/.env.local
+```
 
-- `pnpm contracts:compile` - Compile smart contracts
-- `pnpm contracts:test` - Run smart contract tests
-- `pnpm contracts:deploy` - Deploy contracts to local network
-- `pnpm contracts:deploy:celo-sepolia` - Deploy to Celo Sepolia Testnet
-- `pnpm contracts:deploy:celo` - Deploy to Celo Mainnet
+Edit `apps/contracts/.env` — set `PRIVATE_KEY` (wallet with [faucet CELO](https://faucet.celo.org/celo-sepolia), no `0x` prefix).
 
-## Tech Stack
+### 3. Deploy contract
 
-- **Framework**: Next.js 14 with App Router
-- **Language**: TypeScript
-- **Styling**: Tailwind CSS
-- **UI Components**: shadcn/ui
-- **Smart Contracts**: Hardhat with Viem
-- **Monorepo**: Turborepo
-- **Package Manager**: PNPM
+```bash
+pnpm contracts:deploy:celo-sepolia
+```
 
-## Learn More
+Copy the printed address into `apps/web/.env.local`:
 
-- [Next.js Documentation](https://nextjs.org/docs)
-- [Celo Documentation](https://docs.celo.org/)
-- [Turborepo Documentation](https://turbo.build/repo/docs)
-- [shadcn/ui Documentation](https://ui.shadcn.com/)
-# Celo-Project
+```
+NEXT_PUBLIC_LOOT_SCRATCH_ADDRESS=0xYourDeployedAddress
+```
+
+### 4. Run the app
+
+```bash
+pnpm dev:sepolia
+```
+
+Open [http://localhost:3000/play](http://localhost:3000/play).
+
+- Connect wallet on **Celo Sepolia** (chain ID `11142220`).
+- Yellow **TESTNET MODE** banner confirms Sepolia is active.
+- Tap a ROVA pack → confirm CELO in wallet → play.
+
+### Mainnet
+
+Use `pnpm dev` (default network is Celo mainnet — see `apps/web/src/constants/chains.mainnet.ts`). Deploy with `pnpm contracts:deploy:celo` and set env vars accordingly.
+
+## Network switch
+
+Controlled by `NEXT_PUBLIC_CELO_NETWORK` in `.env.local`:
+
+| Value | Network | Config file |
+|-------|---------|-------------|
+| `sepolia` | Celo Sepolia (faucet) | `chains.sepolia.ts` |
+| `mainnet` or unset | Celo mainnet | `chains.mainnet.ts` |
+
+Or run `pnpm dev:sepolia` to force testnet without editing the file.
+
+## Project structure
+
+```
+apps/web/          Next.js frontend (game, wallet, gallery)
+apps/contracts/    LootScratch.sol + Hardhat deploy scripts
+```
+
+## Scripts
+
+| Command | Description |
+|---------|-------------|
+| `pnpm dev` | Dev server (mainnet config) |
+| `pnpm dev:sepolia` | Dev server on Celo Sepolia |
+| `pnpm build` | Production build |
+| `pnpm contracts:compile` | Compile contracts |
+| `pnpm contracts:test` | Run contract tests |
+| `pnpm contracts:deploy:celo-sepolia` | Deploy to Sepolia (~30s, no prompt) |
+| `pnpm contracts:deploy:celo` | Deploy to Celo mainnet |
+
+## Env vars (web)
+
+| Variable | Description |
+|----------|-------------|
+| `NEXT_PUBLIC_CELO_NETWORK` | `sepolia` or `mainnet` |
+| `CELO_RPC_URL` | RPC endpoint |
+| `NEXT_PUBLIC_LOOT_SCRATCH_ADDRESS` | Deployed `LootScratch` contract |
+| `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID` | WalletConnect project ID (optional) |
+
+## Tech stack
+
+- **Frontend**: Next.js 15, TypeScript, Tailwind CSS, RainbowKit, Wagmi, Viem
+- **Contracts**: Solidity 0.8.24, Hardhat, OpenZeppelin ERC-721
+- **Chain**: [Celo](https://docs.celo.org/) / [Celo Sepolia faucet](https://faucet.celo.org/celo-sepolia)
+
+## Links
+
+- [Celo docs](https://docs.celo.org/)
+- [Sepolia explorer](https://sepolia.celoscan.io/)

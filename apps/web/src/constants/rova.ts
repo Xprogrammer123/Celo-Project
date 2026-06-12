@@ -2,7 +2,7 @@
 export const ROVA_PER_CELO = 100;
 
 /** Cost to start one memory game round. */
-export const ROVA_PER_GAME = 5;
+export const ROVA_PER_GAME = 2;
 
 /** Demo / guest starting balance (3 games). */
 export const ROVA_DEMO_START = ROVA_PER_GAME * 3;
@@ -10,8 +10,8 @@ export const ROVA_DEMO_START = ROVA_PER_GAME * 3;
 /** CELO for the 100 ROVA pack. */
 export const CELO_BUY_PACK = "0.3";
 
-/** CELO cost for one game (5 ROVA at pack rate). */
-export const CELO_PER_GAME = "0.015";
+/** CELO cost for one game (2 ROVA at pack rate). */
+export const CELO_PER_GAME = "0.006";
 
 export type RovaPack = {
   rova: number;
